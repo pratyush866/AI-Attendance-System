@@ -2,10 +2,17 @@
 numpy
 pandas
 scikit-learn
+openpyxl
 
 # Face Recognition Models
-git+https://github.com/ageitgey/face_recognition_models
+face-recognition-models==0.3.0
 face-recognition
+dlib
+
+
+# Voice Recognition & Audio Processing
+resemblyzer
+librosa
 
 supabase   # Database
 bcrypt     # Password Hashing
@@ -14,4 +21,4 @@ segno       # QR Code Generation
 pillow       # Image Processing koi kam ko easy kerna
 
 streamlit    # Frontend/UI
-\setuptools   # Dependency Support
+setuptools<81   # Required for pkg_resources used by face_recognition_models
