@@ -190,7 +190,7 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON public.attendance_logs TO authenticated;
 -- ------------------------------------------------------------
 -- 7. Ensure sequences are owned by their tables (if they exist)
 -- ------------------------------------------------------------
-ALTER SEQUENCE IF EXISTS teachers_teacher_id_seq OWNED BY public.teachers.teacher_id;
+-- ALTER SEQUENCE IF EXISTS teachers_teacher_id_seq OWNED BY public.teachers.teacher_id;  -- skipped: column uses IDENTITY, ownership managed automatically
 ALTER SEQUENCE IF EXISTS students_student_id_seq OWNED BY public.students.student_id;
 ALTER SEQUENCE IF EXISTS subjects_subject_id_seq OWNED BY public.subjects.subject_id;
 ALTER SEQUENCE IF EXISTS attendance_logs_attendance_id_seq OWNED BY public.attendance_logs.attendance_id;
