@@ -1,24 +1,20 @@
-# Data Processing
+streamlit
+# Utilitites 
 numpy
 pandas
+python-dotenv
+
+# FACE RECOGNITION
 scikit-learn
-openpyxl
+dlib-bin
+face_recognition_models
+setuptools<70.0.0
 
-# Face Recognition Models
-face-recognition-models==0.3.0
-face-recognition
-dlib
+supabase
+bcrypt
 
+segno
+pillow
 
-# Voice Recognition & Audio Processing
-resemblyzer
 librosa
-
-supabase   # Database
-bcrypt     # Password Hashing
-
-segno       # QR Code Generation
-pillow       # Image Processing koi kam ko easy kerna
-
-streamlit    # Frontend/UI
-setuptools<81   # Required for pkg_resources used by face_recognition_models
+resemblyzer

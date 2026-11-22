@@ -1,114 +1,83 @@
 import streamlit as st
-from pipelines.database.components.header import header_home
-from pipelines.database.components.footer import footer_home
-from src.screens.UI.base_layout import style_base_layout, style_background_home
+import os
+from src.components.header import header_home
+from src.components.footer import footer_home
+from src.ui.base_layout import style_base_layout, style_background_home
+from src.ui.image_utils import get_image_base64
 
 def home_screen():
     style_background_home()
     style_base_layout()
     header_home()
 
-    # Subtitle / Hero Intro
-    st.markdown(
-        """
-        <div style="text-align:center; max-width:680px; margin:0 auto 2.5rem auto;">
-            <p style="color:#94A3B8; font-size:1.1rem; line-height:1.6; margin:0;">
-                Next-generation automated attendance platform powered by computer vision and voice biometrics. 
-                Experience instant classroom verification, live teacher overrides, and official college reports.
-            </p>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+    # Load images with robust fallback
+    student_img_b64 = None
+    teacher_img_b64 = None
 
-    # Portal Cards
+    if os.path.exists("assets/student_new.png"):
+        student_img_b64 = get_image_base64("assets/student_new.png")
+    elif os.path.exists("student.png"):
+        student_img_b64 = get_image_base64("student.png")
+
+    if os.path.exists("assets/teacher_new.png"):
+        teacher_img_b64 = get_image_base64("assets/teacher_new.png")
+    elif os.path.exists("snap-teacher.png"):
+        teacher_img_b64 = get_image_base64("snap-teacher.png")
+
     col1, col2 = st.columns(2, gap="large")
 
     with col1:
-        st.markdown(
-            """
-            <div style="background:rgba(255, 255, 255, 0.04); border:1px solid rgba(255, 255, 255, 0.1); border-radius:24px; padding:2rem 1.8rem; height:100%; display:flex; flex-direction:column; backdrop-filter:blur(16px); box-shadow:0 20px 40px rgba(0,0,0,0.3);">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-                    <span style="font-size:2.4rem;">🎓</span>
-                    <span style="background:rgba(99, 102, 241, 0.15); color:#A5B4FC; border:1px solid rgba(165, 180, 252, 0.25); padding:3px 12px; border-radius:999px; font-size:0.75rem; font-weight:700;">STUDENT</span>
-                </div>
-                <h3 style="color:#FFFFFF; font-size:1.55rem; font-weight:800; margin:0 0 8px 0; letter-spacing:-0.02em;">Student Portal</h3>
-                <img src="assets/student_mascot.jpg" style="width:100%; max-height:200px; object-fit:contain; border-radius:12px; margin-bottom:8px;" />
-                <p style="color:#94A3B8; font-size:0.92rem; line-height:1.5; margin-bottom:1.4rem;">
-                    Authenticate in seconds using Face ID or Voice recognition, enroll in subjects, and track attendance.
+        st.markdown(f"""
+            <div style="text-align: center; margin-bottom: 12px;">
+                <span style="background: #e0e7ff; color: #4338ca; padding: 4px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.5px;">
+                    🎓 STUDENT ACCESS
+                </span>
+                <h2 style="color: #0f172a; font-size: 1.85rem; font-weight: 800; margin: 10px 0 4px 0; font-family: 'Outfit', sans-serif;">
+                    I'm a Student
+                </h2>
+                <p style="color: #64748b; font-size: 0.9rem; margin: 0 0 12px 0;">
+                    Live in-class selfie check-in & records
                 </p>
-                <div style="color:#CBD5E1; font-size:0.88rem; display:flex; flex-direction:column; gap:8px; margin-bottom:1.8rem;">
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        <span style="color:#10B981;">✔</span> 1-Tap Biometric Face & Voice Login
-                    </div>
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        <span style="color:#10B981;">✔</span> Self-Enrollment with Subject Codes / QR
-                    </div>
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        <span style="color:#10B981;">✔</span> Real-Time Attendance & Shortage Alerts (<75%)
-                    </div>
+                <div style="display: flex; justify-content: center; margin: 10px 0 16px 0;">
+                    <img src="{student_img_b64}" style="width: 135px; height: 135px; object-fit: cover; border-radius: 50%; border: 4px solid #6366f1; box-shadow: 0 12px 24px -6px rgba(99, 102, 241, 0.35);" />
+                </div>
+                <div style="display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin-bottom: 18px;">
+                    <span style="background: #f1f5f9; color: #475569; font-size: 0.75rem; padding: 3px 10px; border-radius: 8px; font-weight: 600;">📸 FaceID Login</span>
+                    <span style="background: #f1f5f9; color: #475569; font-size: 0.75rem; padding: 3px 10px; border-radius: 8px; font-weight: 600;">⚡ Live Check-in</span>
+                    <span style="background: #f1f5f9; color: #475569; font-size: 0.75rem; padding: 3px 10px; border-radius: 8px; font-weight: 600;">📊 Class Stats</span>
                 </div>
             </div>
-            """,
-            unsafe_allow_html=True
-        )
-        st.markdown("<div style='margin-top: -10px;'></div>", unsafe_allow_html=True)
-        if st.button('Enter Student Portal →', type='primary', key="btn_student_portal", use_container_width=True):
+        """, unsafe_allow_html=True)
+
+        if st.button('Student Portal', type='primary', icon=':material/arrow_outward:', use_container_width=True):
             st.session_state['login_type'] = 'student'
             st.rerun()
 
     with col2:
-        st.markdown(
-            """
-            <div style="background:rgba(255, 255, 255, 0.04); border:1px solid rgba(255, 255, 255, 0.1); border-radius:24px; padding:2rem 1.8rem; height:100%; display:flex; flex-direction:column; backdrop-filter:blur(16px); box-shadow:0 20px 40px rgba(0,0,0,0.3);">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-                    <span style="font-size:2.4rem;">👨‍🏫</span>
-                    <span style="background:rgba(244, 63, 94, 0.15); color:#FDA4AF; border:1px solid rgba(253, 164, 175, 0.25); padding:3px 12px; border-radius:999px; font-size:0.75rem; font-weight:700;">FACULTY</span>
-                </div>
-                <h3 style="color:#FFFFFF; font-size:1.55rem; font-weight:800; margin:0 0 8px 0; letter-spacing:-0.02em;">Faculty Portal</h3>
-                <img src="assets/teacher_mascot.jpg" style="width:100%; max-height:200px; object-fit:contain; border-radius:12px; margin-bottom:8px;" />
-                <p style="color:#94A3B8; font-size:0.92rem; line-height:1.5; margin-bottom:1.4rem;">
-                    Manage courses, scan classroom photos, tune AI sensitivity, toggle overrides, and export college registers.
+        st.markdown(f"""
+            <div style="text-align: center; margin-bottom: 12px;">
+                <span style="background: #fce7f3; color: #be185d; padding: 4px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.5px;">
+                    👨‍🏫 FACULTY PORTAL
+                </span>
+                <h2 style="color: #0f172a; font-size: 1.85rem; font-weight: 800; margin: 10px 0 4px 0; font-family: 'Outfit', sans-serif;">
+                    I'm a Teacher
+                </h2>
+                <p style="color: #64748b; font-size: 0.9rem; margin: 0 0 12px 0;">
+                    Start class sessions & Anti-bunk verification
                 </p>
-                <div style="color:#CBD5E1; font-size:0.88rem; display:flex; flex-direction:column; gap:8px; margin-bottom:1.8rem;">
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        <span style="color:#10B981;">✔</span> Multi-Photo Face Recognition & Voice Scan
-                    </div>
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        <span style="color:#10B981;">✔</span> Manual Checkbox Override (Present ✅ / Absent ❌)
-                    </div>
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        <span style="color:#10B981;">✔</span> Roll No-wise Monthly College Excel Reports
-                    </div>
+                <div style="display: flex; justify-content: center; margin: 10px 0 16px 0;">
+                    <img src="{teacher_img_b64}" style="width: 135px; height: 135px; object-fit: cover; border-radius: 50%; border: 4px solid #ec4899; box-shadow: 0 12px 24px -6px rgba(236, 72, 153, 0.35);" />
+                </div>
+                <div style="display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin-bottom: 18px;">
+                    <span style="background: #f1f5f9; color: #475569; font-size: 0.75rem; padding: 3px 10px; border-radius: 8px; font-weight: 600;">🚀 Start Session</span>
+                    <span style="background: #f1f5f9; color: #475569; font-size: 0.75rem; padding: 3px 10px; border-radius: 8px; font-weight: 600;">🛡️ Anti-Bunk Match</span>
+                    <span style="background: #f1f5f9; color: #475569; font-size: 0.75rem; padding: 3px 10px; border-radius: 8px; font-weight: 600;">📋 Export Reports</span>
                 </div>
             </div>
-            """,
-            unsafe_allow_html=True
-        )
-        st.markdown("<div style='margin-top: -10px;'></div>", unsafe_allow_html=True)
-        if st.button('Enter Faculty Portal →', type='primary', key="btn_teacher_portal", use_container_width=True):
+        """, unsafe_allow_html=True)
+
+        if st.button('Teacher Portal', type='primary', icon=':material/arrow_outward:', use_container_width=True):
             st.session_state['login_type'] = 'teacher'
             st.rerun()
-
-    # Features Pill Bar
-    st.markdown(
-        """
-        <div style="display:flex; justify-content:center; gap:20px; flex-wrap:wrap; margin-top:3rem;">
-            <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); padding:8px 18px; border-radius:999px; color:#E2E8F0; font-size:0.82rem; font-weight:600; display:flex; align-items:center; gap:6px;">
-                <span>🎯</span> Nearest-Neighbor Matching
-            </div>
-            <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); padding:8px 18px; border-radius:999px; color:#E2E8F0; font-size:0.82rem; font-weight:600; display:flex; align-items:center; gap:6px;">
-                <span>⚡</span> Sub-second Multi-face Processing
-            </div>
-            <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); padding:8px 18px; border-radius:999px; color:#E2E8F0; font-size:0.82rem; font-weight:600; display:flex; align-items:center; gap:6px;">
-                <span>📊</span> University Excel Registers (.xlsx)
-            </div>
-            <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); padding:8px 18px; border-radius:999px; color:#E2E8F0; font-size:0.82rem; font-weight:600; display:flex; align-items:center; gap:6px;">
-                <span>🔒</span> Encrypted Biometric Vectors
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
 
     footer_home()
