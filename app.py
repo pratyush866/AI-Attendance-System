@@ -27,7 +27,7 @@ if not hasattr(st, "space"):
     def space():
         st.markdown("<div style='padding: 5px 0;'></div>", unsafe_allow_html=True)
     st.space = space
-
+ 
 from src.screens.home_screen import home_screen
 from src.screens.teacher_screen import teacher_screen
 from src.screens.student_screen import student_screen
@@ -35,9 +35,10 @@ from src.screens.session_checkin_screen import session_checkin_screen
 from src.components.dialog_auto_enroll import auto_enroll_dialog
 
 def main():
+    icon = "assets/student_new.png" if os.path.exists("assets/student_new.png") else "🎓"
     st.set_page_config(
         page_title='AI Attendance System | Orbitals team',
-        page_icon='student.png',
+        page_icon=icon,
         layout='centered'
     )
 

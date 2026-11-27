@@ -20,6 +20,7 @@ Conventional mobile or QR attendance systems fail in colleges because absent stu
 - **Atul Upadhyay** — Roll No: `2514018680041`
 - **Divyanshu Upadhyay** — Roll No: `2514018680045`
 - **Adesh Bhatt** — Roll No: `2514018680026`
+- **Mo Ashad** — Roll No: `2514018680055`
 - **Supervised by:** **Ms. Vinita Yadav** (*Assistant Professor / Project Guide, Dept. of Computer Applications*)
 
 ---

@@ -4,9 +4,18 @@ import segno
 import io
 
 
+import os
+
 @st.dialog("Share Class Link")
 def share_subject_dialog(subject_name, subject_code):
-    app_domain = st.secrets.get('APP_DOMAIN', 'https://snapclass-main.streamlit.app')
+    app_domain = None
+    try:
+        if hasattr(st, "secrets"):
+            app_domain = st.secrets.get('APP_DOMAIN')
+    except Exception:
+        pass
+    if not app_domain:
+        app_domain = os.environ.get('APP_DOMAIN', 'https://ai-attendance-system.streamlit.app')
     if not app_domain.startswith('http'):
         app_domain = f'https://{app_domain}'
     join_url = f"{app_domain}/?join-code={subject_code}"

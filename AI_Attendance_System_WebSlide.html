@@ -1,0 +1,1399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI-Based Smart Student Attendance System | WebSlide Presentation</title>
+  <style>
+    :root {
+      --bg-dark: #0a0f24;
+      --bg-card: rgba(15, 23, 42, 0.88);
+      --primary: #2563eb;
+      --primary-light: #3b82f6;
+      --accent-cyan: #06b6d4;
+      --accent-violet: #8b5cf6;
+      --accent-green: #10b981;
+      --accent-red: #ef4444;
+      --accent-gold: #f59e0b;
+      --text-white: #ffffff;
+      --text-light: #e2e8f0;
+      --text-muted: #94a3b8;
+      --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+      --slide-ratio: 16 / 9;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: #030712;
+      color: var(--text-light);
+      font-family: var(--font-family);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+      user-select: none;
+    }
+
+    /* Top Navigation Toolbar */
+    .top-toolbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 56px;
+      background: rgba(10, 15, 36, 0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 1.5rem;
+      z-index: 100;
+    }
+
+    .project-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-logo {
+      height: 34px;
+      width: auto;
+      object-fit: contain;
+      border-radius: 4px;
+    }
+
+    .brand-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: 0.5px;
+    }
+
+    .brand-sub {
+      font-size: 0.75rem;
+      color: var(--accent-cyan);
+      font-weight: 500;
+    }
+
+    .nav-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .slide-counter {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: #fff;
+      background: rgba(255, 255, 255, 0.08);
+      padding: 5px 12px;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      min-width: 95px;
+      text-align: center;
+    }
+
+    .btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #fff;
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .btn:hover {
+      background: rgba(37, 99, 235, 0.4);
+      border-color: var(--primary-light);
+      transform: translateY(-1px);
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      border-color: var(--primary-light);
+    }
+    .btn-primary:hover {
+      background: #1d4ed8;
+    }
+
+    /* Progress bar */
+    .progress-bar-container {
+      position: fixed;
+      top: 56px;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      z-index: 101;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      width: 11.11%;
+      background: linear-gradient(90deg, var(--accent-cyan), var(--primary), var(--accent-violet));
+      transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Slide Deck Viewport */
+    .deck-viewport {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 70px 1.5rem 60px 1.5rem;
+      position: relative;
+    }
+
+    .slide-wrapper {
+      width: 100%;
+      max-width: 1240px;
+      aspect-ratio: var(--slide-ratio);
+      background: var(--bg-dark);
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 40px rgba(37, 99, 235, 0.15);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Individual Slide */
+    .slide {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      padding: 2.1rem 2.6rem;
+      display: flex;
+      flex-direction: column;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateX(30px) scale(0.99);
+      transition: opacity 0.35s ease, transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      overflow-y: auto;
+    }
+
+    .slide.active {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateX(0) scale(1);
+      z-index: 2;
+    }
+
+    /* Slide Header */
+    .slide-header {
+      margin-bottom: 1.25rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding-bottom: 0.7rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+
+    .slide-category {
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: var(--accent-cyan);
+      margin-bottom: 3px;
+    }
+
+    .slide-title {
+      font-size: 1.65rem;
+      font-weight: 800;
+      color: #fff;
+      line-height: 1.2;
+    }
+
+    .slide-tag {
+      font-size: 0.75rem;
+      background: rgba(6, 182, 212, 0.15);
+      color: var(--accent-cyan);
+      border: 1px solid rgba(6, 182, 212, 0.3);
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-weight: 600;
+    }
+
+    /* Content Layouts */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.3rem;
+      flex: 1;
+      align-items: stretch;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.15rem;
+      flex: 1;
+      align-items: stretch;
+    }
+
+    .grid-3x2 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      flex: 1;
+    }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+    }
+
+    /* Feature Cards */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      padding: 1.1rem 1.3rem;
+      backdrop-filter: blur(8px);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .card.blue-card { border-top: 3px solid var(--primary-light); }
+    .card.cyan-card { border-top: 3px solid var(--accent-cyan); }
+    .card.violet-card { border-top: 3px solid var(--accent-violet); }
+    .card.green-card { border-top: 3px solid var(--accent-green); }
+    .card.red-card { border-top: 3px solid var(--accent-red); }
+    .card.gold-card { border-top: 3px solid var(--accent-gold); }
+
+    .card-title {
+      font-size: 1.02rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 0.65rem;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .card-title .icon {
+      font-size: 1.1rem;
+    }
+
+    .bullet-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.48rem;
+      font-size: 0.86rem;
+      line-height: 1.4;
+      color: #cbd5e1;
+    }
+
+    .bullet-list li {
+      position: relative;
+      padding-left: 1.1rem;
+    }
+
+    .bullet-list li::before {
+      content: "•";
+      position: absolute;
+      left: 0;
+      color: var(--accent-cyan);
+      font-size: 1.1rem;
+      line-height: 1;
+    }
+
+    .bullet-list strong {
+      color: #fff;
+    }
+
+    /* Images and Diagrams */
+    .diagram-container {
+      background: rgba(0, 0, 0, 0.4);
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 10px;
+      overflow: hidden;
+      height: 100%;
+    }
+
+    .diagram-img {
+      max-width: 100%;
+      max-height: 360px;
+      object-fit: contain;
+      border-radius: 6px;
+      transition: transform 0.3s ease;
+    }
+
+    .diagram-img:hover {
+      transform: scale(1.02);
+    }
+
+    /* Metric Badge / Stat Block */
+    .stat-badge {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      padding: 0.85rem;
+      text-align: center;
+    }
+
+    .stat-val {
+      font-size: 1.65rem;
+      font-weight: 800;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .stat-lbl {
+      font-size: 0.76rem;
+      font-weight: 600;
+      color: var(--text-light);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .stat-sub {
+      font-size: 0.70rem;
+      color: var(--text-muted);
+      margin-top: 3px;
+    }
+
+    /* Title Slide Custom Styling */
+    .title-slide-container {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 100%;
+      position: relative;
+    }
+
+    .college-tag {
+      display: inline-block;
+      font-size: 0.82rem;
+      font-weight: 800;
+      color: var(--accent-cyan);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      background: rgba(6, 182, 212, 0.12);
+      border: 1px solid rgba(6, 182, 212, 0.35);
+      padding: 3px 12px;
+      border-radius: 20px;
+      margin-bottom: 10px;
+    }
+
+    .main-hero-title {
+      font-size: 2.15rem;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      color: #fff;
+      line-height: 1.15;
+      background: linear-gradient(135deg, #ffffff 40%, #93c5fd 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .main-hero-sub {
+      font-size: 1.05rem;
+      color: #cbd5e1;
+      margin-top: 6px;
+      font-weight: 400;
+    }
+
+    .team-grid {
+      display: grid;
+      grid-template-columns: 1.45fr 1fr;
+      gap: 1.15rem;
+      margin-top: 1.25rem;
+    }
+
+    .member-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 5px 10px;
+      background: rgba(255, 255, 255, 0.04);
+      border-radius: 6px;
+      margin-bottom: 4px;
+      border-left: 3px solid var(--accent-cyan);
+    }
+
+    .member-name {
+      font-weight: 700;
+      color: #fff;
+      font-size: 0.83rem;
+    }
+
+    .member-roll {
+      font-family: monospace;
+      font-size: 0.78rem;
+      color: var(--accent-cyan);
+      background: rgba(6, 182, 212, 0.1);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    /* Comparison Table */
+    .compare-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.80rem;
+      margin-top: 0.5rem;
+    }
+
+    .compare-table th, .compare-table td {
+      padding: 7px 10px;
+      text-align: left;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .compare-table th {
+      background: rgba(255, 255, 255, 0.07);
+      color: #fff;
+      font-weight: 700;
+    }
+
+    .compare-table tr:hover td {
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .highlight-row {
+      background: rgba(16, 185, 129, 0.1) !important;
+      border-left: 3px solid var(--accent-green);
+    }
+
+    /* Bottom Navigation Bar */
+    .bottom-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 48px;
+      background: rgba(10, 15, 36, 0.95);
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 1.5rem;
+      z-index: 100;
+    }
+
+    .dots-nav {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .dot:hover {
+      background: rgba(255, 255, 255, 0.5);
+      transform: scale(1.2);
+    }
+
+    .dot.active {
+      width: 26px;
+      border-radius: 6px;
+      background: var(--accent-cyan);
+    }
+
+    .shortcuts-hint {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      display: flex;
+      gap: 12px;
+    }
+
+    kbd {
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: #fff;
+      font-family: inherit;
+      font-size: 0.72rem;
+    }
+
+    /* Grid Overview Modal */
+    .grid-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(3, 7, 18, 0.92);
+      backdrop-filter: blur(14px);
+      z-index: 200;
+      padding: 2rem;
+      overflow-y: auto;
+    }
+
+    .grid-modal.open {
+      display: block;
+    }
+
+    .grid-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      max-width: 1200px;
+      margin: 0 auto 1.5rem auto;
+    }
+
+    .grid-cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.3rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .grid-thumb {
+      aspect-ratio: 16 / 9;
+      background: var(--bg-card);
+      border: 2px solid rgba(255, 255, 255, 0.15);
+      border-radius: 10px;
+      padding: 1rem;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.2s ease;
+    }
+
+    .grid-thumb:hover, .grid-thumb.active {
+      border-color: var(--accent-cyan);
+      transform: translateY(-3px);
+      box-shadow: 0 10px 25px rgba(6, 182, 212, 0.25);
+    }
+
+    .grid-thumb-num {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--accent-cyan);
+    }
+
+    .grid-thumb-title {
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    /* Print Styles */
+    @media print {
+      body {
+        background: #fff !important;
+        color: #000 !important;
+      }
+      .top-toolbar, .bottom-bar, .progress-bar-container, .grid-modal {
+        display: none !important;
+      }
+      .deck-viewport {
+        padding: 0 !important;
+        display: block !important;
+      }
+      .slide-wrapper {
+        border: none !important;
+        box-shadow: none !important;
+        background: #fff !important;
+      }
+      .slide {
+        position: relative !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+        transform: none !important;
+        page-break-after: always !important;
+        height: 100vh !important;
+        color: #0f172a !important;
+        background: #ffffff !important;
+      }
+      .card {
+        background: #f8fafc !important;
+        border-color: #cbd5e1 !important;
+        color: #0f172a !important;
+      }
+      .card-title, .slide-title, .main-hero-title, .member-name {
+        color: #0f172a !important;
+        -webkit-text-fill-color: initial !important;
+      }
+      .bullet-list li {
+        color: #334155 !important;
+      }
+      .compare-table th {
+        background: #e2e8f0 !important;
+        color: #0f172a !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation Toolbar -->
+  <header class="top-toolbar">
+    <div class="project-brand">
+      <img src="assets/itm_college_logo.png" alt="ITM College Logo" class="brand-logo" onerror="this.style.display='none'">
+      <div>
+        <div class="brand-title">AI-Based Smart Student Attendance System</div>
+        <div class="brand-sub">ITM College of Science & Management | BCA Project 2026-27</div>
+      </div>
+    </div>
+
+    <div class="nav-controls">
+      <span class="slide-counter" id="slideIndicator">Slide 01 / 09</span>
+      <button class="btn" id="btnPrev" title="Previous Slide (Left Arrow)">◀ Prev</button>
+      <button class="btn btn-primary" id="btnNext" title="Next Slide (Right Arrow or Space)">Next ▶</button>
+      <button class="btn" id="btnGrid" title="Slide Overview (O / Esc)">⊞ Grid</button>
+      <button class="btn" id="btnFullscreen" title="Toggle Fullscreen (F)">⛶ Fullscreen</button>
+      <button class="btn" onclick="window.print()" title="Export / Print to PDF">🖨️ PDF</button>
+    </div>
+  </header>
+
+  <!-- Progress Bar -->
+  <div class="progress-bar-container">
+    <div class="progress-bar-fill" id="progressBar"></div>
+  </div>
+
+  <!-- Main Presentation Deck Viewport -->
+  <main class="deck-viewport">
+    <div class="slide-wrapper">
+
+      <!-- ===================================================================
+           SLIDE 1: Title Slide & Project Identity
+           =================================================================== -->
+      <section class="slide active" id="slide-1">
+        <div class="title-slide-container">
+          <div>
+            <span class="college-tag">ITM COLLEGE OF SCIENCE AND MANAGEMENT, GIDA, GORAKHPUR</span>
+            <div style="font-size: 0.85rem; color: var(--accent-cyan); font-weight: 600; margin-bottom: 6px;">
+              Affiliated to DDU Gorakhpur University • Course: BCA Final Year (2026-2027)
+            </div>
+            <h1 class="main-hero-title">AI-BASED SMART STUDENT ATTENDANCE SYSTEM</h1>
+            <h2 class="main-hero-sub">Dual-Biometric Verification & Anti-Bunk Physical Classroom Presence Architecture</h2>
+          </div>
+
+          <!-- Team & Supervisor Information -->
+          <div class="team-grid">
+            <!-- Left Card: Orbitals Team Members (5 members) -->
+            <div class="card blue-card">
+              <div class="card-title">
+                <span class="icon">👥</span> Project Team (Orbitals) — BCA Final Year
+              </div>
+              <div class="member-item">
+                <span class="member-name">1. Pratyush Mishra <span style="color:var(--accent-cyan);font-weight:normal;">(Team Leader)</span></span>
+                <span class="member-roll">Roll: 2514018680059</span>
+              </div>
+              <div class="member-item">
+                <span class="member-name">2. Atul Upadhyay</span>
+                <span class="member-roll">Roll: 2514018680041</span>
+              </div>
+              <div class="member-item">
+                <span class="member-name">3. Divyanshu Upadhyay</span>
+                <span class="member-roll">Roll: 2514018680045</span>
+              </div>
+              <div class="member-item">
+                <span class="member-name">4. Adesh Bhatt</span>
+                <span class="member-roll">Roll: 2514018680026</span>
+              </div>
+              <div class="member-item" style="border-left-color: var(--accent-green); background: rgba(16, 185, 129, 0.08);">
+                <span class="member-name">5. Mo Ashad <span style="color:var(--accent-green);font-size:0.75rem;">★ Team Member</span></span>
+                <span class="member-roll" style="color:var(--accent-green); background: rgba(16, 185, 129, 0.15);">Roll: 2514018680055</span>
+              </div>
+            </div>
+
+            <!-- Right Card: Project Guide -->
+            <div class="card gold-card">
+              <div class="card-title">
+                <span class="icon">🎓</span> Project Supervisor & Guide
+              </div>
+              <div style="font-size: 1.15rem; font-weight: 800; color: #fff; margin-bottom: 4px;">Ms. Vinita Yadav</div>
+              <div style="font-size: 0.88rem; color: var(--accent-gold); font-weight: 600;">Assistant Professor / Project Guide</div>
+              <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 6px; line-height: 1.4;">
+                Department of Computer Applications<br>
+                ITM College of Science and Management<br>
+                Gorakhpur - 273209 (U.P.)
+              </div>
+              <div style="margin-top: 10px; padding: 6px 10px; background: rgba(245, 158, 11, 0.1); border-radius: 6px; font-size: 0.78rem; color: var(--accent-gold); border: 1px dashed rgba(245, 158, 11, 0.3);">
+                Academic Session: 2026 – 2027
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================================================================
+           SLIDE 2: Problem Statement (Concise, Minimum Words)
+           =================================================================== -->
+      <section class="slide" id="slide-2">
+        <div class="slide-header">
+          <div>
+            <div class="slide-category">Problem Statement</div>
+            <div class="slide-title">Proxy Attendance & Classroom Bunking Crisis</div>
+          </div>
+          <span class="slide-tag">Slide 02 / 09</span>
+        </div>
+
+        <div class="grid-2">
+          <!-- Card 1: Conventional Flaws -->
+          <div class="card red-card">
+            <div class="card-title"><span class="icon">⚠️</span> Conventional Attendance Flaws</div>
+            <ul class="bullet-list">
+              <li><strong>Manual Registers:</strong> 10–15 mins wasted per class (20-25% teaching loss).</li>
+              <li><strong>Paper Tampering:</strong> Registers get damaged, misplaced, or falsely marked.</li>
+              <li><strong>WhatsApp QR Leaks:</strong> QR codes are forwarded to absent students outside.</li>
+              <li><strong>GPS Mock Spoofing:</strong> Android Fake GPS apps mark attendance from canteens.</li>
+              <li><strong>Peer Proxy:</strong> Friends sign for absent bunking classmates.</li>
+              <li><strong>Clerical Burden:</strong> Hours spent compiling monthly DDU reports.</li>
+            </ul>
+          </div>
+
+          <!-- Card 2: Engineering Goal -->
+          <div class="card blue-card">
+            <div class="card-title"><span class="icon">🎯</span> Project Goal & Engineering Focus</div>
+            <ul class="bullet-list">
+              <li><strong>Core Challenge:</strong> Prove physical in-class presence with zero hardware cost.</li>
+              <li><strong>Zero Proxy Guarantee:</strong> Block QR forwarding, location spoofing, photo replay.</li>
+              <li><strong>Anti-Bunk Cross-Check:</strong> Presence verified against faculty room photo.</li>
+              <li><strong>Dual-Biometrics:</strong> Deep metric face recognition + voice fallback.</li>
+              <li><strong>Zero Dedicated Hardware:</strong> Works on existing phones, laptops & web browsers.</li>
+              <li><strong>Dual Database:</strong> Supabase PostgreSQL cloud sync + local SQLite replica.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================================================================
+           SLIDE 3: Proposed Solution (Dual-Verification Protocol)
+           =================================================================== -->
+      <section class="slide" id="slide-3">
+        <div class="slide-header">
+          <div>
+            <div class="slide-category">Proposed Architecture</div>
+            <div class="slide-title">Dual-Verification Anti-Bunk Protocol</div>
+          </div>
+          <span class="slide-tag">Slide 03 / 09</span>
+        </div>
+
+        <div class="grid-3">
+          <!-- Step 1 -->
+          <div class="card blue-card">
+            <div class="card-title"><span class="icon">1️⃣</span> Step 1: Student Live Selfie</div>
+            <ul class="bullet-list">
+              <li>Faculty launches session with <strong>dynamic 4-digit PIN & QR</strong>.</li>
+              <li>Student enters PIN + snaps <strong>live webcam selfie</strong>.</li>
+              <li>Dlib ResNet-34 extracts <strong>128D facial vector</strong>.</li>
+              <li>Verifies identity against profile (\(d \le 0.58\)).</li>
+              <li>Status: <em>Claim Recorded (Pending Room Check)</em>.</li>
+            </ul>
+          </div>
+
+          <!-- Step 2 -->
+          <div class="card violet-card">
+            <div class="card-title"><span class="icon">2️⃣</span> Step 2: Faculty Room Photo</div>
+            <ul class="bullet-list">
+              <li>Faculty snaps a single <strong>wide-angle classroom photo</strong>.</li>
+              <li>Captures all seated students at exact timestamp.</li>
+              <li>Uploaded directly into AI verification queue.</li>
+              <li>Zero special hardware—uses phone or laptop camera.</li>
+            </ul>
+          </div>
+
+          <!-- Step 3 -->
+          <div class="card green-card">
+            <div class="card-title"><span class="icon">3️⃣</span> Step 3: AI Cross-Matching</div>
+            <ul class="bullet-list">
+              <li>ResNet-34 extracts all faces in room picture.</li>
+              <li>Computes <strong>Euclidean distance matrix</strong> with selfie.</li>
+              <li><strong>Matched in Room:</strong> <span style="color:var(--accent-green);font-weight:bold;">PRESENT (Verified)</span>.</li>
+              <li><strong>Missing from Room:</strong> <span style="color:var(--accent-red);font-weight:bold;">PROXY / BUNK DETECTED</span>!</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================================================================
+           SLIDE 4: TOOLS & TECHNOLOGIES STACK (NEW DEDICATED SLIDE!)
+           =================================================================== -->
+      <section class="slide" id="slide-4">
+        <div class="slide-header">
+          <div>
+            <div class="slide-category">Tools & Technologies</div>
+            <div class="slide-title">Software Stack, Libraries & Frameworks</div>
+          </div>
+          <span class="slide-tag">Slide 04 / 09</span>
+        </div>
+
+        <div class="grid-3x2">
+          <!-- Core & Web UI -->
+          <div class="card blue-card">
+            <div class="card-title"><span class="icon">🐍</span> Core & Web UI</div>
+            <ul class="bullet-list">
+              <li><strong>Python 3.10+:</strong> High-speed computational backend.</li>
+              <li><strong>Streamlit:</strong> Reactive, modern role-based web portal.</li>
+              <li><strong>NumPy & Pandas:</strong> Fast vector math & Excel reports.</li>
+            </ul>
+          </div>
+
+          <!-- Computer Vision & Face AI -->
+          <div class="card violet-card">
+            <div class="card-title"><span class="icon">👁️</span> Computer Vision & AI</div>
+            <ul class="bullet-list">
+              <li><strong>Dlib:</strong> 68-point facial landmark predictor.</li>
+              <li><strong>ResNet-34:</strong> 128D deep metric face embedding.</li>
+              <li><strong>OpenCV & Pillow:</strong> Affine alignment & image processing.</li>
+            </ul>
+          </div>
+
+          <!-- Voice Biometrics -->
+          <div class="card cyan-card">
+            <div class="card-title"><span class="icon">🎙️</span> Voice Biometrics</div>
+            <ul class="bullet-list">
+              <li><strong>Librosa:</strong> Audio FFT & 40-band Mel-spectrograms.</li>
+              <li><strong>Resemblyzer:</strong> GE2E 3-layer LSTM 256D d-vectors.</li>
+              <li><strong>SoundFile:</strong> 16 kHz audio capture & analysis.</li>
+            </ul>
+          </div>
+
+          <!-- Database & Persistence -->
+          <div class="card green-card">
+            <div class="card-title"><span class="icon">🗄️</span> Database & Storage</div>
+            <ul class="bullet-list">
+              <li><strong>Supabase:</strong> Cloud PostgreSQL database for sync.</li>
+              <li><strong>SQLite3:</strong> Zero-latency local offline replica.</li>
+              <li><strong>Vector Storage:</strong> Compact 512-byte float arrays.</li>
+            </ul>
+          </div>
+
+          <!-- Security & Auth -->
+          <div class="card gold-card">
+            <div class="card-title"><span class="icon">🛡️</span> Security & Utilities</div>
+            <ul class="bullet-list">
+              <li><strong>bcrypt:</strong> Salted password hashing (cost factor 12).</li>
+              <li><strong>Segno:</strong> Real-time dynamic QR generation.</li>
+              <li><strong>python-dotenv:</strong> Secure environment configuration.</li>
+            </ul>
+          </div>
+
+          <!-- Dev & Version Control -->
+          <div class="card blue-card">
+            <div class="card-title"><span class="icon">⚙️</span> Dev & Version Control</div>
+            <ul class="bullet-list">
+              <li><strong>Git & GitHub:</strong> Team version control & deployment.</li>
+              <li><strong>VS Code & Antigravity:</strong> IDE & fast AI workflows.</li>
+              <li><strong>Virtualenv:</strong> Clean isolated Python dependencies.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================================================================
+           SLIDE 5: System Architecture & Three-Tier Design
+           =================================================================== -->
+      <section class="slide" id="slide-5">
+        <div class="slide-header">
+          <div>
+            <div class="slide-category">System Architecture</div>
+            <div class="slide-title">Three-Tier Layered Framework & Pipeline</div>
+          </div>
+          <span class="slide-tag">Slide 05 / 09</span>
+        </div>
+
+        <div class="grid-2">
+          <!-- Left: 3-Tier Description -->
+          <div class="card blue-card">
+            <div class="card-title"><span class="icon">🏛️</span> 3-Tier Layered Architecture</div>
+            <ul class="bullet-list">
+              <li><strong>1. Presentation Tier (Streamlit UI):</strong>
+                <br>Responsive web portal for Students, Faculty, and Admin. Live webcam capture & dynamic QR display.
+              </li>
+              <li><strong>2. AI & Processing Tier:</strong>
+                <br>• <em>Face Recognition:</em> Dlib 68-pt landmarks + ResNet-34 128D embeddings.
+                <br>• <em>Voice Biometrics:</em> Librosa + Resemblyzer 256D GE2E d-vectors.
+                <br>• <em>Anti-Bunk Engine:</em> Pairwise Euclidean matrix distance cross-matching.
+                <br>• <em>Security:</em> Bcrypt password hashing & session timers.
+              </li>
+              <li><strong>3. Data Persistence Tier:</strong>
+                <br>Supabase Cloud PostgreSQL + local SQLite replica for zero-latency offline resilience.
+              </li>
+            </ul>
+          </div>
+
+          <!-- Right: Architecture Diagram -->
+          <div class="diagram-container">
+            <img src="assets/architecture_diagram.png" alt="System Architecture Diagram" class="diagram-img" onerror="this.src='ITMcollege.png'">
+            <div style="font-size:0.75rem; color:var(--text-muted); margin-top: 6px;">Figure: Multi-Modal Biometric Architecture & Data Ingestion Flow</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================================================================
+           SLIDE 6: Dual-Verification Anti-Bunk Workflow
+           =================================================================== -->
+      <section class="slide" id="slide-6">
+        <div class="slide-header">
+          <div>
+            <div class="slide-category">Anti-Bunk Workflow</div>
+            <div class="slide-title">End-to-End Verification Flowchart & Decision Tree</div>
+          </div>
+          <span class="slide-tag">Slide 06 / 09</span>
+        </div>
+
+        <div class="grid-2">
+          <!-- Left: Detailed Step Sequence -->
+          <div class="card blue-card">
+            <div class="card-title"><span class="icon">🔄</span> Verification Lifecycle</div>
+            <ul class="bullet-list">
+              <li><strong>Phase 1: Session Initiation</strong><br>Faculty selects Subject & Section; generates dynamic PIN & QR.</li>
+              <li><strong>Phase 2: Student In-Class Check-in</strong><br>Student submits PIN + snaps live webcam selfie. Dlib verifies profile. Status: <em>Pending Room Check</em>.</li>
+              <li><strong>Phase 3: Classroom Panoramic Snapshot</strong><br>Faculty captures wide-angle photo of seated lecture hall.</li>
+              <li><strong>Phase 4: Matrix Cross-Verification</strong><br>ResNet-34 extracts all classroom faces. Computes Euclidean distance matrix.</li>
+              <li><strong>Phase 5: Automated Decision</strong><br>
+                • Min distance \(\le 0.58\): <span style="color:var(--accent-green);font-weight:bold;">PRESENT</span><br>
+                • Min distance \(> 0.58\): <span style="color:var(--accent-red);font-weight:bold;">PROXY / BUNK DETECTED</span>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Right: Flowchart Diagram -->
+          <div class="diagram-container">
+            <img src="assets/dual_verification_flow.png" alt="Anti-Bunk Flowchart Diagram" class="diagram-img">
+            <div style="font-size:0.75rem; color:var(--text-muted); margin-top: 6px;">Figure: Dual-Verification Anti-Bunk Verification Logic Flow</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================================================================
+           SLIDE 7: Biometric AI Engine (Mathematical Models & Security)
+           =================================================================== -->
+      <section class="slide" id="slide-7">
+        <div class="slide-header">
+          <div>
+            <div class="slide-category">Biometric AI Pipeline</div>
+            <div class="slide-title">Deep Metric Learning & Audio Forensics Pipeline</div>
+          </div>
+          <span class="slide-tag">Slide 07 / 09</span>
+        </div>
+
+        <div class="grid-3">
+          <!-- Card 1 -->
+          <div class="card blue-card">
+            <div class="card-title"><span class="icon">👁️</span> Face Recognition (ResNet-34)</div>
+            <ul class="bullet-list">
+              <li><strong>Face Detection:</strong> HOG & CNN MMOD detectors for varied classroom lighting.</li>
+              <li><strong>68-Point Alignment:</strong> Normalizes eye, nose, and mouth positions via affine transform.</li>
+              <li><strong>128D Metric Embedding:</strong> Maps features onto a unit hypersphere.</li>
+              <li><strong>Euclidean Metric:</strong> \(d(v_1, v_2) = \sqrt{\sum (v_{1,i} - v_{2,i})^2}\).</li>
+              <li><strong>Threshold:</strong> \(d \le 0.58\) ensures 99.38% LFW accuracy.</li>
+            </ul>
+          </div>
+
+          <!-- Card 2 -->
+          <div class="card violet-card">
+            <div class="card-title"><span class="icon">🎙️</span> Voice Biometrics (GE2E)</div>
+            <ul class="bullet-list">
+              <li><strong>16 kHz Audio Input:</strong> Captured via browser microphone.</li>
+              <li><strong>Spectrogram:</strong> Librosa STFT computes 40-band mel spectrograms.</li>
+              <li><strong>GE2E 3-Layer LSTM:</strong> Generates 256D speaker d-vector.</li>
+              <li><strong>Cosine Metric:</strong> \(S_c = \frac{u \cdot v}{\|u\| \|v\|} \ge 0.75\).</li>
+              <li><strong>Accessibility:</strong> Hands-free attendance check-in.</li>
+            </ul>
+          </div>
+
+          <!-- Card 3 -->
+          <div class="card green-card">
+            <div class="card-title"><span class="icon">🛡️</span> Liveness & Security Guard</div>
+            <ul class="bullet-list">
+              <li><strong>Anti-Replay Defense:</strong> Live browser webcam capture blocks static photos.</li>
+              <li><strong>Dynamic 4-Digit PIN:</strong> Changes every lecture; expires automatically.</li>
+              <li><strong>Dynamic QR Token:</strong> Segno QR regenerated on teacher screen.</li>
+              <li><strong>Duplicate Guard:</strong> Database constraint blocks repeat check-in.</li>
+              <li><strong>Biometric Privacy:</strong> Stores 128D float vectors; raw photos purged.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================================================================
+           SLIDE 8: System Modules & Implementation Results
+           =================================================================== -->
+      <section class="slide" id="slide-8">
+        <div class="slide-header">
+          <div>
+            <div class="slide-category">Implementation & Results</div>
+            <div class="slide-title">System Portals & Empirical Performance Metrics</div>
+          </div>
+          <span class="slide-tag">Slide 08 / 09</span>
+        </div>
+
+        <!-- 3 Portals -->
+        <div class="grid-3" style="margin-bottom: 1rem;">
+          <div class="card blue-card">
+            <div class="card-title"><span class="icon">👨‍🎓</span> Student Portal</div>
+            <ul class="bullet-list" style="font-size:0.82rem;">
+              <li>Live webcam check-in with dynamic PIN.</li>
+              <li>Voice-assisted attendance option.</li>
+              <li>Monthly calendar & attendance percentage gauge.</li>
+            </ul>
+          </div>
+          <div class="card violet-card">
+            <div class="card-title"><span class="icon">👩‍🏫</span> Faculty Portal</div>
+            <ul class="bullet-list" style="font-size:0.82rem;">
+              <li>1-click dynamic session launch with PIN.</li>
+              <li>Classroom panoramic photo upload.</li>
+              <li>Proxy detection alert log & 1-click Excel export.</li>
+            </ul>
+          </div>
+          <div class="card green-card">
+            <div class="card-title"><span class="icon">⚙️</span> Administrator Portal</div>
+            <ul class="bullet-list" style="font-size:0.82rem;">
+              <li>Student/faculty onboarding & management.</li>
+              <li>Biometric vector calibration & enrollment.</li>
+              <li>College-wide analytics and audit trail.</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- 4 Metric Badges -->
+        <div class="grid-4">
+          <div class="stat-badge" style="border-top: 3px solid var(--primary-light);">
+            <div class="stat-val" style="color: var(--primary-light);">99.2%</div>
+            <div class="stat-lbl">Biometric Accuracy</div>
+            <div class="stat-sub">Validated in varied lighting</div>
+          </div>
+          <div class="stat-badge" style="border-top: 3px solid var(--accent-green);">
+            <div class="stat-val" style="color: var(--accent-green);">&lt; 1.2s</div>
+            <div class="stat-lbl">Matching Latency</div>
+            <div class="stat-sub">Real-time vector inference</div>
+          </div>
+          <div class="stat-badge" style="border-top: 3px solid var(--accent-red);">
+            <div class="stat-val" style="color: var(--accent-red);">100%</div>
+            <div class="stat-lbl">Anti-Proxy Elimination</div>
+            <div class="stat-sub">Zero off-campus proxy bypass</div>
+          </div>
+          <div class="stat-badge" style="border-top: 3px solid var(--accent-gold);">
+            <div class="stat-val" style="color: var(--accent-gold);">512 B</div>
+            <div class="stat-lbl">Vector Footprint</div>
+            <div class="stat-sub">Per student face embedding</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================================================================
+           SLIDE 9: Conclusion, Comparative Advantages & Future Roadmap
+           =================================================================== -->
+      <section class="slide" id="slide-9">
+        <div class="slide-header">
+          <div>
+            <div class="slide-category">Conclusion & Future Scope</div>
+            <div class="slide-title">Comparative Benchmark & Future Horizons</div>
+          </div>
+          <span class="slide-tag">Slide 09 / 09</span>
+        </div>
+
+        <div class="grid-2">
+          <!-- Comparative Benchmark Table -->
+          <div class="card blue-card">
+            <div class="card-title"><span class="icon">📊</span> Comparative Technology Benchmark</div>
+            <table class="compare-table">
+              <thead>
+                <tr>
+                  <th>Method</th>
+                  <th>Time Taken</th>
+                  <th>Proxy Risk</th>
+                  <th>Hardware Cost</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Manual Register</td>
+                  <td>10-15 mins</td>
+                  <td>Very High</td>
+                  <td>₹0 (Paper)</td>
+                </tr>
+                <tr>
+                  <td>Static QR Code</td>
+                  <td>2-3 mins</td>
+                  <td>High (WhatsApp)</td>
+                  <td>₹0</td>
+                </tr>
+                <tr>
+                  <td>Fingerprint Turnstile</td>
+                  <td>5-10 mins (Queue)</td>
+                  <td>Low</td>
+                  <td>₹50,000+</td>
+                </tr>
+                <tr class="highlight-row">
+                  <td><strong>Our AI Dual-System</strong></td>
+                  <td><strong>&lt; 2 mins total</strong></td>
+                  <td><strong style="color:var(--accent-green);">ZERO (Eradicated)</strong></td>
+                  <td><strong>₹0 (Uses phones)</strong></td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div style="margin-top: 0.8rem; font-size: 0.82rem; color: #cbd5e1; line-height: 1.4;">
+              <strong>Key Achievement:</strong> Eliminates proxies, saves 15 minutes per lecture, and automates DDU university compliance reports.
+            </div>
+          </div>
+
+          <!-- Future Roadmap & Thank You -->
+          <div class="card green-card">
+            <div class="card-title"><span class="icon">🚀</span> Future Horizons & Acknowledgements</div>
+            <ul class="bullet-list">
+              <li><strong>Smart CCTV Integration:</strong> Continuous ambient attendance via ceiling IP cameras.</li>
+              <li><strong>Automated Guardian Alerts:</strong> Instant SMS/WhatsApp alert sent to parents if bunking is flagged.</li>
+              <li><strong>College ERP Integration:</strong> Direct API sync with college & university portals.</li>
+            </ul>
+
+            <div style="margin-top: 1rem; padding: 10px 14px; background: rgba(16, 185, 129, 0.1); border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.25);">
+              <div style="font-weight: 800; color: #fff; font-size: 0.95rem;">THANK YOU!</div>
+              <div style="font-size: 0.78rem; color: var(--accent-green); margin-top: 3px;">
+                Special gratitude to Project Guide <strong>Ms. Vinita Yadav</strong> & ITM College of Science and Management.
+              </div>
+              <div style="font-size: 0.82rem; color: #fff; font-weight: 700; margin-top: 5px;">
+                Questions & Discussion (Q&A) Welcome!
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- Bottom Navigation & Shortcuts Bar -->
+  <footer class="bottom-bar">
+    <div class="dots-nav" id="dotsContainer"></div>
+
+    <div class="shortcuts-hint">
+      <span><kbd>◀</kbd> / <kbd>▶</kbd> Navigate</span>
+      <span><kbd>Space</kbd> Next</span>
+      <span><kbd>F</kbd> Fullscreen</span>
+      <span><kbd>O</kbd> Grid</span>
+    </div>
+  </footer>
+
+  <!-- Grid Overview Modal -->
+  <div class="grid-modal" id="gridModal">
+    <div class="grid-header">
+      <h2 style="font-size: 1.4rem; color: #fff;">Slide Deck Overview (9 Slides)</h2>
+      <button class="btn" id="btnCloseGrid">✕ Close (Esc)</button>
+    </div>
+    <div class="grid-cards" id="gridCardsContainer"></div>
+  </div>
+
+  <script>
+    const totalSlides = 9;
+    let currentSlide = 1;
+
+    const slideTitles = [
+      "Title & Project Identity",
+      "Problem Statement & Motivation",
+      "Proposed Solution: Dual-Verification Protocol",
+      "Tools & Technologies: Software Stack",
+      "System Architecture: 3-Tier Layered Framework",
+      "Anti-Bunk Workflow & Flowchart",
+      "Biometric AI Engine: Deep Metric Learning",
+      "System Portals & Empirical Results",
+      "Conclusion, Benchmark & Future Roadmap"
+    ];
+
+    const slideIndicator = document.getElementById("slideIndicator");
+    const progressBar = document.getElementById("progressBar");
+    const dotsContainer = document.getElementById("dotsContainer");
+    const gridCardsContainer = document.getElementById("gridCardsContainer");
+    const gridModal = document.getElementById("gridModal");
+
+    // Initialize Dots
+    for (let i = 1; i <= totalSlides; i++) {
+      const dot = document.createElement("div");
+      dot.className = `dot ${i === 1 ? 'active' : ''}`;
+      dot.title = `Go to Slide ${i}: ${slideTitles[i-1]}`;
+      dot.addEventListener("click", () => goToSlide(i));
+      dotsContainer.appendChild(dot);
+    }
+
+    // Initialize Grid Cards
+    for (let i = 1; i <= totalSlides; i++) {
+      const card = document.createElement("div");
+      card.className = `grid-thumb ${i === 1 ? 'active' : ''}`;
+      card.innerHTML = `
+        <div class="grid-thumb-num">SLIDE 0${i} / 09</div>
+        <div class="grid-thumb-title">${slideTitles[i-1]}</div>
+        <div style="font-size: 0.72rem; color: #94a3b8;">Click to open</div>
+      `;
+      card.addEventListener("click", () => {
+        goToSlide(i);
+        closeGrid();
+      });
+      gridCardsContainer.appendChild(card);
+    }
+
+    function updateView() {
+      for (let i = 1; i <= totalSlides; i++) {
+        const slide = document.getElementById(`slide-${i}`);
+        if (slide) {
+          if (i === currentSlide) {
+            slide.classList.add("active");
+          } else {
+            slide.classList.remove("active");
+          }
+        }
+      }
+
+      slideIndicator.textContent = `Slide 0${currentSlide} / 0${totalSlides}`;
+      const pct = (currentSlide / totalSlides) * 100;
+      progressBar.style.width = `${pct}%`;
+
+      const dots = dotsContainer.querySelectorAll(".dot");
+      dots.forEach((dot, idx) => {
+        if (idx + 1 === currentSlide) {
+          dot.classList.add("active");
+        } else {
+          dot.classList.remove("active");
+        }
+      });
+
+      const thumbs = gridCardsContainer.querySelectorAll(".grid-thumb");
+      thumbs.forEach((th, idx) => {
+        if (idx + 1 === currentSlide) {
+          th.classList.add("active");
+        } else {
+          th.classList.remove("active");
+        }
+      });
+    }
+
+    function goToSlide(n) {
+      if (n >= 1 && n <= totalSlides) {
+        currentSlide = n;
+        updateView();
+      }
+    }
+
+    function nextSlide() {
+      if (currentSlide < totalSlides) {
+        goToSlide(currentSlide + 1);
+      }
+    }
+
+    function prevSlide() {
+      if (currentSlide > 1) {
+        goToSlide(currentSlide - 1);
+      }
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => {
+          alert(`Error attempting fullscreen: ${err.message}`);
+        });
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        }
+      }
+    }
+
+    function openGrid() {
+      gridModal.classList.add("open");
+    }
+
+    function closeGrid() {
+      gridModal.classList.remove("open");
+    }
+
+    function toggleGrid() {
+      if (gridModal.classList.contains("open")) {
+        closeGrid();
+      } else {
+        openGrid();
+      }
+    }
+
+    // Event Listeners
+    document.getElementById("btnNext").addEventListener("click", nextSlide);
+    document.getElementById("btnPrev").addEventListener("click", prevSlide);
+    document.getElementById("btnFullscreen").addEventListener("click", toggleFullscreen);
+    document.getElementById("btnGrid").addEventListener("click", toggleGrid);
+    document.getElementById("btnCloseGrid").addEventListener("click", closeGrid);
+
+    // Keyboard Shortcuts
+    document.addEventListener("keydown", (e) => {
+      if (gridModal.classList.contains("open")) {
+        if (e.key === "Escape") closeGrid();
+        return;
+      }
+
+      switch (e.key) {
+        case "ArrowRight":
+        case "ArrowDown":
+        case " ":
+        case "PageDown":
+        case "n":
+        case "N":
+          e.preventDefault();
+          nextSlide();
+          break;
+        case "ArrowLeft":
+        case "ArrowUp":
+        case "PageUp":
+        case "Backspace":
+        case "p":
+        case "P":
+          e.preventDefault();
+          prevSlide();
+          break;
+        case "Home":
+          e.preventDefault();
+          goToSlide(1);
+          break;
+        case "End":
+          e.preventDefault();
+          goToSlide(totalSlides);
+          break;
+        case "f":
+        case "F":
+          e.preventDefault();
+          toggleFullscreen();
+          break;
+        case "o":
+        case "O":
+          e.preventDefault();
+          toggleGrid();
+          break;
+        case "Escape":
+          if (document.fullscreenElement) {
+            document.exitFullscreen();
+          }
+          break;
+      }
+    });
+
+    updateView();
+  </script>
+</body>
+</html>

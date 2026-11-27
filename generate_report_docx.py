@@ -9,6 +9,7 @@ Team Members:
   - Atul Upadhyay (Roll No. 2514018680041)
   - Divyanshu Upadhyay (Roll No. 2514018680045)
   - Adesh Bhatt (Roll No. 2514018680026)
+  - Mo Ashad (Roll No. 2514018680055)
 Supervised By: Ms. Vinita Yadav (Project Guide)
 """
 
@@ -306,7 +307,8 @@ def build_pro_project_report():
         ("Pratyush Mishra", "2514018680059", " (Team Leader)"),
         ("Atul Upadhyay", "2514018680041", ""),
         ("Divyanshu Upadhyay", "2514018680045", ""),
-        ("Adesh Bhatt", "2514018680026", "")
+        ("Adesh Bhatt", "2514018680026", ""),
+        ("Mo Ashad", "2514018680055", "")
     ]
     for sname, sroll, stag in students:
         r_sn = p_by.add_run(f"• {sname}{stag}\n")
@@ -359,7 +361,7 @@ def build_pro_project_report():
         "during the academic session 2026–2027:"
     )
 
-    cert_tbl = doc.add_table(rows=5, cols=3)
+    cert_tbl = doc.add_table(rows=6, cols=3)
     col_w_cert = [Inches(1.0), Inches(3.2), Inches(2.3)]
     cert_headers = ["S.No.", "Student Name", "University Roll No."]
     for idx, name in enumerate(cert_headers):
@@ -369,7 +371,8 @@ def build_pro_project_report():
         ("1", "Pratyush Mishra (Team Leader)", "2514018680059"),
         ("2", "Atul Upadhyay", "2514018680041"),
         ("3", "Divyanshu Upadhyay", "2514018680045"),
-        ("4", "Adesh Bhatt", "2514018680026")
+        ("4", "Adesh Bhatt", "2514018680026"),
+        ("5", "Mo Ashad", "2514018680055")
     ]
     for r_idx, row_data in enumerate(c_data, start=1):
         for c_idx, val in enumerate(row_data):
@@ -436,7 +439,7 @@ def build_pro_project_report():
         "in part or full to any other university or institution for the award of any diploma or degree."
     )
 
-    dec_tbl = doc.add_table(rows=1, cols=4)
+    dec_tbl = doc.add_table(rows=1, cols=len(students))
     for c_i, (sn, sr, _) in enumerate(students):
         c = dec_tbl.cell(0, c_i)
         p = c.paragraphs[0]

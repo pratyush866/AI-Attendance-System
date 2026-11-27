@@ -1,20 +1,21 @@
 streamlit
-# Utilitites 
-numpy
+numpy<2.0.0
 pandas
 python-dotenv
 
-# FACE RECOGNITION
+# FACE RECOGNITION & BIOMETRICS
 scikit-learn
 dlib-bin
 face_recognition_models
 setuptools<70.0.0
 
+# DATABASE & AUTH
 supabase
 bcrypt
 
+# UTILITIES & AUDIO
 segno
 pillow
-
+soundfile
 librosa
 resemblyzer
