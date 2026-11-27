@@ -38,9 +38,9 @@ from src.components.dialog_auto_enroll import auto_enroll_dialog
 def main():
     icon = "assets/student_new.png" if os.path.exists("assets/student_new.png") else "🎓"
     st.set_page_config(
-        page_title='AI Attendance System | Orbitals team',
+        page_title='SNAPCLASS | AI Smart Attendance System',
         page_icon=icon,
-        layout='centered'
+        layout='wide'
     )
 
     # Route: Check if a student opened an in-class live attendance link
