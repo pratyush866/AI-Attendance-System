@@ -3,17 +3,17 @@ import streamlit as st
 def footer_home():
     st.markdown("""
 <div style="margin-top:2rem;padding-top:1.1rem;border-top:1px solid rgba(148,163,184,0.22);display:flex;flex-direction:column;align-items:center;gap:10px;">
-<div style="display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:28px;font-family:'Plus Jakarta Sans',sans-serif;font-size:0.9rem;font-weight:600;color:#334155;">
+<div style="display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:12px 24px;font-family:'Plus Jakarta Sans',sans-serif;font-size:0.88rem;font-weight:600;color:#334155;">
 <span style="display:inline-flex;align-items:center;gap:7px;">
 <span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:rgba(79,70,229,0.12);color:#4f46e5;">🛡️</span>
 Trusted &amp; Secure
 </span>
-<span style="color:#cbd5e1;">|</span>
+<span class="snap-footer-sep" style="color:#cbd5e1;">|</span>
 <span style="display:inline-flex;align-items:center;gap:7px;">
 <span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:rgba(245,158,11,0.15);color:#d97706;">⚡</span>
 Fast &amp; Reliable
 </span>
-<span style="color:#cbd5e1;">|</span>
+<span class="snap-footer-sep" style="color:#cbd5e1;">|</span>
 <span style="display:inline-flex;align-items:center;gap:7px;">
 <span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:rgba(236,72,153,0.14);color:#db2777;">💗</span>
 Built for a Smarter Campus

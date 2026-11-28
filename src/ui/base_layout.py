@@ -64,6 +64,62 @@ def style_background_home():
     white-space: nowrap !important;
 }
 
+/* Hero Typography & Grids */
+.snap-hero-title {
+    font-family: 'Outfit', sans-serif !important;
+    font-size: 3.55rem !important;
+    font-weight: 900 !important;
+    line-height: 1.02 !important;
+    margin: 0 0 6px 0 !important;
+    letter-spacing: -1.5px;
+    color: #0f172a;
+}
+
+.snap-hero-sub {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.7rem;
+    font-weight: 800;
+    color: #1e293b;
+    line-height: 1.2;
+    margin-bottom: 8px;
+}
+
+.snap-feature-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    max-width: 540px;
+}
+
+.snap-hero-hud {
+    position: relative;
+    border-radius: 26px;
+    padding: 18px;
+    background: linear-gradient(145deg, rgba(124, 58, 237, 0.16) 0%, rgba(99, 102, 241, 0.22) 55%, rgba(56, 189, 248, 0.16) 100%);
+    border: 1px solid rgba(167, 139, 250, 0.4);
+    box-shadow: 0 24px 50px -15px rgba(79, 70, 229, 0.25);
+    overflow: hidden;
+    min-height: 295px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.snap-role-inner {
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 14px;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.snap-role-img {
+    width: 100%;
+    height: 185px;
+    object-fit: cover;
+    border-radius: 18px;
+}
+
 /* Student Role Card */
 .st-key-student_card {
     background: rgba(255, 255, 255, 0.95) !important;
@@ -114,14 +170,80 @@ def style_background_home():
     box-shadow: 0 10px 22px -6px rgba(219, 39, 119, 0.42) !important;
 }
 
+/* Mobile Phone View Adjustments */
 @media (max-width: 768px) {
     .st-key-navbar_pill {
         border-radius: 20px !important;
-        padding: 0.75rem 1rem !important;
+        padding: 0.65rem 0.85rem !important;
+        margin-bottom: 1rem !important;
+    }
+    /* Keep Navbar pills compact and horizontal on mobile instead of stacking into 5 giant rows */
+    .st-key-navbar_pill div[data-testid="stHorizontalBlock"] {
+        flex-direction: row !important;
+        flex-wrap: wrap !important;
+        align-items: center !important;
+        gap: 6px !important;
+    }
+    .st-key-navbar_pill div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"]:first-child {
+        flex: 1 1 100% !important;
+        min-width: 100% !important;
+        margin-bottom: 4px !important;
+    }
+    .st-key-navbar_pill div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"]:nth-child(2),
+    .st-key-navbar_pill div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"]:nth-child(3),
+    .st-key-navbar_pill div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"]:nth-child(4) {
+        flex: 1 1 0 !important;
+        min-width: 0 !important;
+        width: auto !important;
+        margin-bottom: 0 !important;
+    }
+    .st-key-navbar_pill div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"]:nth-child(5) {
+        flex: 0 0 auto !important;
+        min-width: fit-content !important;
+        width: auto !important;
+        margin-bottom: 0 !important;
+    }
+    .st-key-navbar_pill button {
+        padding: 5px 8px !important;
+        font-size: 0.76rem !important;
+        min-height: 32px !important;
+    }
+    .snap-nav-sep, .snap-nav-tagline {
+        display: none !important;
+    }
+    .snap-hero-title {
+        font-size: 2.35rem !important;
+        letter-spacing: -0.8px !important;
+    }
+    .snap-hero-sub {
+        font-size: 1.25rem !important;
+    }
+    .snap-feature-grid {
+        grid-template-columns: 1fr !important;
+        gap: 8px !important;
+        max-width: 100% !important;
+    }
+    .snap-hero-hud {
+        min-height: 200px !important;
+        padding: 10px !important;
+        border-radius: 20px !important;
     }
     .st-key-student_card, .st-key-teacher_card {
-        padding: 1.25rem !important;
+        padding: 1.2rem !important;
         border-radius: 20px !important;
+    }
+    .snap-footer-sep {
+        display: none !important;
+    }
+}
+
+@media (max-width: 520px) {
+    .snap-role-inner {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+    }
+    .snap-role-img {
+        height: 165px !important;
     }
 }
 </style>
@@ -259,9 +381,9 @@ button[data-testid="stBaseButton-secondary"]:hover {
    ======================================================= */
 @media (max-width: 768px) {
     .block-container {
-        padding-left: 0.9rem !important;
-        padding-right: 0.9rem !important;
-        padding-top: 1rem !important;
+        padding-left: 0.85rem !important;
+        padding-right: 0.85rem !important;
+        padding-top: 0.85rem !important;
     }
 
     div[data-testid="stHorizontalBlock"] {
@@ -282,17 +404,17 @@ button[data-testid="stBaseButton-secondary"]:hover {
     }
 
     h2 {
-        font-size: 1.55rem !important;
+        font-size: 1.5rem !important;
         line-height: 1.2 !important;
     }
 
     h3 {
-        font-size: 1.25rem !important;
+        font-size: 1.2rem !important;
     }
 
     button {
         width: 100% !important;
-        padding: 12px 18px !important;
+        padding: 11px 16px !important;
     }
 }
 </style>
