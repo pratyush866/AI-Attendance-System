@@ -49,7 +49,8 @@ def voice_attendance_dialog(selected_subject_id):
                     "Roll No": student.get('roll_no') or f"ID-{student['student_id']}",
                     "Name": student['name'],
                     "Match Score": score_str,
-                    "Status": "✅ Present" if is_present else "❌ Absent"
+                    "Status": "✅ Present" if is_present else "❌ Absent",
+                    "Present": bool(is_present)
                 })
 
                 attendance_to_log.append({

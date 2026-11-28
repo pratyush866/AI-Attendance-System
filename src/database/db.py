@@ -298,6 +298,21 @@ def create_student(new_name, roll_no=None, face_embedding=None, voice_embedding=
     return [row]
 
 
+def get_or_create_student_by_roll(name, roll_no):
+    """Find an existing student by roll_no (if provided) or create a new student record."""
+    clean_roll = str(roll_no).strip() if roll_no is not None else ""
+    clean_name = str(name).strip()
+    if clean_roll:
+        existing = [
+            s for s in get_all_students()
+            if str(s.get('roll_no') or '').strip().lower() == clean_roll.lower()
+        ]
+        if existing:
+            return existing[0], False
+    created = create_student(clean_name, roll_no=clean_roll or None)
+    return (created[0], True) if created else (None, False)
+
+
 def create_subject(subject_code, name, section, teacher_id):
     if IS_SUPABASE_AVAILABLE:
         try:
@@ -654,9 +669,24 @@ def create_attendance_session(subject_id, teacher_id, session_pin):
     session_id = str(uuid.uuid4())[:8].upper()
     created_at = datetime.now().isoformat()
 
+    if IS_SUPABASE_AVAILABLE:
+        try:
+            supabase.table("attendance_sessions").update({"status": "closed"}).eq("subject_id", subject_id).eq("status", "active").execute()
+            res = supabase.table("attendance_sessions").insert({
+                "session_id": session_id,
+                "subject_id": subject_id,
+                "teacher_id": teacher_id,
+                "session_pin": str(session_pin),
+                "status": "active",
+                "created_at": created_at
+            }).execute()
+            if res.data:
+                return res.data[0]
+        except Exception as e:
+            logging.warning(f"Supabase create_attendance_session failed, fallback to local: {e}")
+
     conn = get_local_conn()
     c = conn.cursor()
-    # Close any existing active sessions for this subject
     c.execute("UPDATE attendance_sessions SET status = 'closed' WHERE subject_id = ? AND status = 'active'", (subject_id,))
     c.execute("""
         INSERT INTO attendance_sessions (session_id, subject_id, teacher_id, session_pin, status, created_at)
@@ -670,6 +700,21 @@ def create_attendance_session(subject_id, teacher_id, session_pin):
 
 
 def get_session_by_id(session_id):
+    if IS_SUPABASE_AVAILABLE:
+        try:
+            res = supabase.table("attendance_sessions").select("*, subjects(*), teachers(name)").eq("session_id", session_id).execute()
+            if res.data:
+                row = res.data[0]
+                sub = row.get("subjects") or {}
+                tea = row.get("teachers") or {}
+                row["subject_name"] = sub.get("name", "")
+                row["subject_code"] = sub.get("subject_code", "")
+                row["section"] = sub.get("section", "")
+                row["teacher_name"] = tea.get("name", "")
+                return row
+        except Exception as e:
+            logging.warning(f"Supabase get_session_by_id failed, fallback to local: {e}")
+
     conn = get_local_conn()
     c = conn.cursor()
     c.execute("""
@@ -686,6 +731,19 @@ def get_session_by_id(session_id):
 
 def submit_session_selfie(session_id, student_id, similarity_score=1.0):
     timestamp = datetime.now().isoformat()
+    if IS_SUPABASE_AVAILABLE:
+        try:
+            supabase.table("session_selfies").upsert({
+                "session_id": session_id,
+                "student_id": student_id,
+                "timestamp": timestamp,
+                "photo_verified": True,
+                "similarity_score": float(similarity_score)
+            }, on_conflict="session_id,student_id").execute()
+            return True
+        except Exception as e:
+            logging.warning(f"Supabase submit_session_selfie failed, fallback to local: {e}")
+
     conn = get_local_conn()
     c = conn.cursor()
     try:
@@ -706,6 +764,18 @@ def submit_session_selfie(session_id, student_id, similarity_score=1.0):
 
 
 def get_session_selfies(session_id):
+    if IS_SUPABASE_AVAILABLE:
+        try:
+            res = supabase.table("session_selfies").select("*, students(name, roll_no)").eq("session_id", session_id).order("timestamp").execute()
+            if res.data is not None:
+                for r in res.data:
+                    stu = r.get("students") or {}
+                    r["student_name"] = stu.get("name", f"Student #{r.get('student_id')}")
+                    r["roll_no"] = stu.get("roll_no")
+                return res.data
+        except Exception as e:
+            logging.warning(f"Supabase get_session_selfies failed, fallback to local: {e}")
+
     conn = get_local_conn()
     c = conn.cursor()
     c.execute("""
@@ -722,6 +792,15 @@ def get_session_selfies(session_id):
 
 def get_active_session_for_subject(subject_id):
     """Return the latest active attendance session for a subject if one exists."""
+    if IS_SUPABASE_AVAILABLE:
+        try:
+            res = supabase.table("attendance_sessions").select("*").eq("subject_id", subject_id).eq("status", "active").order("created_at", desc=True).limit(1).execute()
+            if res.data:
+                return res.data[0]
+            return None
+        except Exception as e:
+            logging.warning(f"Supabase get_active_session_for_subject failed, fallback to local: {e}")
+
     conn = get_local_conn()
     c = conn.cursor()
     c.execute(
@@ -734,6 +813,13 @@ def get_active_session_for_subject(subject_id):
 
 
 def close_attendance_session(session_id):
+    if IS_SUPABASE_AVAILABLE:
+        try:
+            supabase.table("attendance_sessions").update({"status": "closed"}).eq("session_id", session_id).execute()
+            return
+        except Exception as e:
+            logging.warning(f"Supabase close_attendance_session failed, fallback to local: {e}")
+
     conn = get_local_conn()
     c = conn.cursor()
     c.execute("UPDATE attendance_sessions SET status = 'closed' WHERE session_id = ?", (session_id,))

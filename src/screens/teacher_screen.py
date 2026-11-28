@@ -18,7 +18,11 @@ from src.database.db import (
     get_subject_students,
     create_attendance_session,
     get_active_session_for_subject,
+    close_attendance_session,
     get_session_selfies,
+    get_or_create_student_by_roll,
+    enroll_student_to_subject,
+    create_attendance,
     roll_sort_key
 )
 from src.components.dialog_create_subject import create_subject_dialog
@@ -164,12 +168,17 @@ def teacher_tab_take_attendance():
                 st.session_state[session_key] = sess
                 st.rerun()
         else:
-            c_btn1, c_btn2 = st.columns(2)
+            c_btn1, c_btn2, c_btn3 = st.columns([2, 1.4, 1.4])
             with c_btn1:
                 if st.button("📲 Share QR", type="primary", use_container_width=True):
                     share_session_dialog(current_session['session_id'], current_session['session_pin'], selected_subject['name'])
             with c_btn2:
                 if st.button("🔄 Refresh", use_container_width=True):
+                    st.rerun()
+            with c_btn3:
+                if st.button("⏹️ End", use_container_width=True, key="end_live_sess_btn"):
+                    close_attendance_session(current_session['session_id'])
+                    del st.session_state[session_key]
                     st.rerun()
 
     # If session is active, show live submissions list
@@ -297,6 +306,7 @@ def teacher_tab_take_attendance():
                         "In-Class Selfie": "✅ Yes" if in_selfie else "❌ No",
                         "Classroom Photo": "✅ Yes" if in_photo else "❌ No",
                         "Status": status,
+                        "Present": bool(is_present),
                         "Security Note": verif_note
                     })
 
@@ -314,6 +324,57 @@ def teacher_tab_take_attendance():
     with c3:
         if st.button('🎤 Voice Attendance', type='secondary', use_container_width=True):
             voice_attendance_dialog(selected_subject_id)
+
+    # Quick Digital Roll-Call Fallback (no camera required)
+    with st.expander("📋 Quick Digital Roll-Call (Manual / No-Camera Backup)"):
+        enrolled_nodes = get_subject_students(selected_subject_id)
+        roster = sorted(
+            [n['students'] for n in enrolled_nodes if n.get('students')],
+            key=roll_sort_key
+        )
+        if not roster:
+            st.info("No students enrolled in this subject yet. Add students in 'Manage Subjects'.")
+        else:
+            st.caption("All students are automatically sorted by Roll No. Tick Present students and save directly to the register.")
+            mark_all = st.checkbox("Select All Present", value=False, key=f"mark_all_{selected_subject_id}")
+            manual_df = pd.DataFrame([
+                {
+                    "Roll No": s.get("roll_no") or f"ID-{s['student_id']}",
+                    "Student Name": s["name"],
+                    "Present": bool(mark_all),
+                    "_sid": s["student_id"]
+                }
+                for s in roster
+            ])
+            edited_manual = st.data_editor(
+                manual_df[["Roll No", "Student Name", "Present"]],
+                hide_index=True,
+                use_container_width=True,
+                disabled=["Roll No", "Student Name"],
+                column_config={
+                    "Present": st.column_config.CheckboxColumn("Present (✔)", default=False)
+                },
+                key=f"manual_rollcall_{selected_subject_id}"
+            )
+            if st.button("💾 Save Digital Roll-Call to Register", type="primary", use_container_width=True, key=f"save_manual_{selected_subject_id}"):
+                ts_now = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+                manual_logs = []
+                for idx, s in enumerate(roster):
+                    is_p = bool(edited_manual.iloc[idx]["Present"])
+                    manual_logs.append({
+                        "student_id": s["student_id"],
+                        "subject_id": selected_subject_id,
+                        "session_id": current_session["session_id"] if current_session else "",
+                        "timestamp": ts_now,
+                        "is_present": is_p,
+                        "verification_status": "🟢 Present (Teacher Roll-Call)" if is_p else "❌ Absent"
+                    })
+                create_attendance(manual_logs)
+                if current_session:
+                    close_attendance_session(current_session["session_id"])
+                    del st.session_state[session_key]
+                st.success(f"✅ Saved attendance for {len(manual_logs)} students!")
+                st.rerun()
 
 
 def teacher_tab_manage_subjects():
@@ -351,6 +412,51 @@ def teacher_tab_manage_subjects():
                 stats=stats,
                 footer_callback=share_btn
             )
+
+        # Bulk Student Roster Setup (no manual student-by-student enrollment needed)
+        st.markdown("<hr style='border: none; border-top: 1px solid #e2e8f0; margin: 16px 0;'/>", unsafe_allow_html=True)
+        with st.expander("👥 Add / Bulk Import Class Students (Roll No + Name)"):
+            st.caption(
+                "Paste your class list (one student per line as `RollNo, Student Name`) to add the full batch at once. "
+                "Existing Roll Numbers are reused automatically across all subjects!"
+            )
+            roster_sub_map = {f"{s['name']} ({s['subject_code']} • {s['section']})": s['subject_id'] for s in subjects}
+            target_sub_lbl = st.selectbox("Target Subject", options=list(roster_sub_map.keys()), key="bulk_target_sub")
+            bulk_text = st.text_area(
+                "Student List (Roll No, Name)",
+                placeholder="2514018680026, Adesh Bhatt\n2514018680041, Atul Upadhyay\n2514018680045, Divyanshu Upadhyay\n2514018680055, Mo Ashad\n2514018680059, Pratyush Mishra",
+                height=140,
+                key="bulk_student_lines"
+            )
+            if st.button("➕ Add & Enroll Students", type="primary", use_container_width=True, key="bulk_enroll_btn"):
+                lines = [ln.strip() for ln in bulk_text.splitlines() if ln.strip()]
+                if not lines:
+                    st.warning("Please enter at least one student line.")
+                else:
+                    target_sid = roster_sub_map[target_sub_lbl]
+                    added_cnt, enrolled_cnt = 0, 0
+                    for ln in lines:
+                        if "," in ln:
+                            parts = ln.split(",", 1)
+                        elif "\t" in ln:
+                            parts = ln.split("\t", 1)
+                        elif " - " in ln:
+                            parts = ln.split(" - ", 1)
+                        else:
+                            parts = ln.split(None, 1)
+                        if len(parts) == 2:
+                            r_no, s_name = parts[0].strip(), parts[1].strip()
+                        else:
+                            r_no, s_name = None, parts[0].strip()
+                        if s_name:
+                            stu, is_new = get_or_create_student_by_roll(s_name, r_no)
+                            if stu:
+                                if is_new:
+                                    added_cnt += 1
+                                enroll_student_to_subject(stu['student_id'], target_sid)
+                                enrolled_cnt += 1
+                    st.success(f"✅ Enrolled {enrolled_cnt} students ({added_cnt} newly created) sorted by Roll No!")
+                    st.rerun()
     else:
         st.info("NO SUBJECTS FOUND. Click '➕ Create New Subject' above to get started.")
 
