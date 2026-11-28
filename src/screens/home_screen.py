@@ -135,14 +135,10 @@ def home_screen():
         )
         with nav_brand:
             st.markdown(f"""
-<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+<div style="display:flex;align-items:center;gap:10px;">
 {GRAD_CAP_SVG}
-<span style="font-family:'Outfit',sans-serif;font-weight:900;font-size:1.25rem;letter-spacing:-0.4px;color:#0f172a;">
+<span style="font-family:'Outfit',sans-serif;font-weight:900;font-size:1.3rem;letter-spacing:-0.4px;color:#0f172a;">
 SNAP<span style="background:linear-gradient(135deg,#4338ca,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">CLASS</span>
-</span>
-<span class="snap-nav-sep" style="color:#cbd5e1;font-weight:300;font-size:1.1rem;">|</span>
-<span class="snap-nav-tagline" style="color:#64748b;font-size:0.84rem;font-weight:500;font-style:italic;">
-Smart Dual-Verification &amp; Anti-Bunk Attendance Platform
 </span>
 </div>
 """, unsafe_allow_html=True)
