@@ -1,0 +1,73 @@
+name: SNAPCLASS AI Attendance CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  verify-app:
+    name: Syntax Check & Streamlit AppTest
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install Linux audio and vision libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libsndfile1 libgl1 libglib2.0-0 ffmpeg
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Check Python syntax across app and src
+        run: |
+          python - << 'EOF'
+          import ast, os
+
+          ast.parse(open("app.py", encoding="utf-8").read(), filename="app.py")
+          for root, _, files in os.walk("src"):
+              for fn in files:
+                  if fn.endswith(".py"):
+                      path = os.path.join(root, fn)
+                      ast.parse(open(path, encoding="utf-8").read(), filename=path)
+          print("All Python files passed AST syntax validation.")
+          EOF
+
+      - name: Run Streamlit AppTest UI & Navigation Suite
+        run: |
+          python - << 'EOF'
+          from streamlit.testing.v1 import AppTest
+
+          at = AppTest.from_file("app.py", default_timeout=60).run()
+          assert not at.exception, f"Home screen exception: {at.exception}"
+
+          at.button(key="nav_about_btn").click().run()
+          assert not at.exception, f"About dialog exception: {at.exception}"
+
+          at_h = AppTest.from_file("app.py", default_timeout=60).run()
+          at_h.button(key="nav_help_btn").click().run()
+          assert not at.exception, f"Help dialog exception: {at.exception}"
+
+          at_s = AppTest.from_file("app.py", default_timeout=60).run()
+          at_s.button(key="student_login_cta").click().run()
+          assert not at.exception, f"Student portal exception: {at.exception}"
+
+          at_t = AppTest.from_file("app.py", default_timeout=60).run()
+          at_t.button(key="teacher_login_cta").click().run()
+          assert not at.exception, f"Teacher portal exception: {at.exception}"
+
+          print("ALL 5 Streamlit AppTest checks passed cleanly!")
+          EOF
