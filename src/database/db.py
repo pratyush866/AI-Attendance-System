@@ -217,12 +217,30 @@ def teacher_login(username, password):
     return None
 
 
+def roll_sort_key(student_or_roll, fallback_id=0):
+    """Natural sort key for student roll numbers (numeric rolls sort before text/empty)."""
+    if isinstance(student_or_roll, dict):
+        roll = student_or_roll.get('roll_no')
+        sid = student_or_roll.get('student_id') or fallback_id
+        name = str(student_or_roll.get('name') or '').lower()
+    else:
+        roll = student_or_roll
+        sid = fallback_id
+        name = ''
+    roll_str = str(roll).strip() if roll is not None else ''
+    if not roll_str:
+        return (2, 0, '', name, int(sid or 0))
+    if roll_str.isdigit():
+        return (0, int(roll_str), roll_str, name, int(sid or 0))
+    return (1, 0, roll_str.lower(), name, int(sid or 0))
+
+
 def get_all_students():
     if IS_SUPABASE_AVAILABLE:
         try:
             res = supabase.table('students').select("*").execute()
             if res.data is not None:
-                return res.data
+                return sorted(res.data, key=roll_sort_key)
         except Exception as e:
             logging.warning(f"Supabase get_all_students failed, fallback to local: {e}")
 
@@ -242,7 +260,7 @@ def get_all_students():
                 r['voice_embedding'] = json.loads(r['voice_embedding'])
             except Exception:
                 pass
-    return rows
+    return sorted(rows, key=roll_sort_key)
 
 
 def create_student(new_name, roll_no=None, face_embedding=None, voice_embedding=None):
@@ -251,7 +269,12 @@ def create_student(new_name, roll_no=None, face_embedding=None, voice_embedding=
 
     if IS_SUPABASE_AVAILABLE:
         try:
-            data = {'name': new_name, 'face_embedding': face_embedding, "voice_embedding": voice_embedding}
+            data = {
+                'name': new_name,
+                'roll_no': roll_no,
+                'face_embedding': face_embedding,
+                'voice_embedding': voice_embedding
+            }
             res = supabase.table('students').insert(data).execute()
             return res.data
         except Exception as e:
@@ -465,11 +488,35 @@ def create_attendance(logs):
     return logs
 
 
+def update_student_face_embedding(student_id, face_embedding):
+    """Persist a newly captured face embedding for an existing student."""
+    if IS_SUPABASE_AVAILABLE:
+        try:
+            supabase.table('students').update({'face_embedding': face_embedding}).eq('student_id', student_id).execute()
+            return True
+        except Exception as e:
+            logging.warning(f"Supabase update_student_face_embedding failed, fallback to local: {e}")
+
+    conn = get_local_conn()
+    c = conn.cursor()
+    c.execute(
+        "UPDATE students SET face_embedding = ? WHERE student_id = ?",
+        (json.dumps(face_embedding), student_id)
+    )
+    conn.commit()
+    conn.close()
+    return True
+
+
 def get_attendance_for_teacher(teacher_id):
     if IS_SUPABASE_AVAILABLE:
         try:
-            res = supabase.table('attendance_logs').select("*, subjects!inner(*)").eq('subjects.teacher_id', teacher_id).execute()
-            if res.data:
+            res = supabase.table('attendance_logs').select("*, subjects!inner(*), students(student_id, name, roll_no)").eq('subjects.teacher_id', teacher_id).execute()
+            if res.data is not None:
+                for item in res.data:
+                    stu = item.get('students') or {}
+                    item['student_name'] = stu.get('name', f"Student #{item.get('student_id')}")
+                    item['roll_no'] = stu.get('roll_no')
                 return res.data
         except Exception:
             pass
@@ -477,9 +524,11 @@ def get_attendance_for_teacher(teacher_id):
     conn = get_local_conn()
     c = conn.cursor()
     c.execute("""
-        SELECT al.*, s.name AS subject_name, s.subject_code, s.section, s.teacher_id
+        SELECT al.*, s.name AS subject_name, s.subject_code, s.section, s.teacher_id,
+               st.name AS student_name, st.roll_no AS student_roll_no
         FROM attendance_logs al
         JOIN subjects s ON al.subject_id = s.subject_id
+        LEFT JOIN students st ON al.student_id = st.student_id
         WHERE s.teacher_id = ?
         ORDER BY al.timestamp DESC
     """, (teacher_id,))
@@ -490,10 +539,18 @@ def get_attendance_for_teacher(teacher_id):
         result.append({
             'id': r['id'],
             'student_id': r['student_id'],
+            'student_name': r['student_name'] or f"Student #{r['student_id']}",
+            'roll_no': r['student_roll_no'],
             'subject_id': r['subject_id'],
+            'session_id': r['session_id'],
             'timestamp': r['timestamp'],
             'is_present': bool(r['is_present']),
             'verification_status': r['verification_status'],
+            'students': {
+                'student_id': r['student_id'],
+                'name': r['student_name'] or f"Student #{r['student_id']}",
+                'roll_no': r['student_roll_no']
+            },
             'subjects': {
                 'subject_id': r['subject_id'],
                 'name': r['subject_name'],
@@ -509,8 +566,8 @@ def get_subject_students(subject_id):
     if IS_SUPABASE_AVAILABLE:
         try:
             res = supabase.table('subject_students').select("*, students(*)").eq('subject_id', subject_id).execute()
-            if res.data:
-                return res.data
+            if res.data is not None:
+                return sorted(res.data, key=lambda n: roll_sort_key(n.get('students') or {}))
         except Exception:
             pass
 
@@ -552,7 +609,7 @@ def get_subject_students(subject_id):
                 'voice_embedding': voice_emb
             }
         })
-    return result
+    return sorted(result, key=lambda n: roll_sort_key(n['students']))
 
 
 def get_subject_by_code(subject_code):
@@ -661,6 +718,19 @@ def get_session_selfies(session_id):
     rows = [dict(r) for r in c.fetchall()]
     conn.close()
     return rows
+
+
+def get_active_session_for_subject(subject_id):
+    """Return the latest active attendance session for a subject if one exists."""
+    conn = get_local_conn()
+    c = conn.cursor()
+    c.execute(
+        "SELECT * FROM attendance_sessions WHERE subject_id = ? AND status = 'active' ORDER BY created_at DESC LIMIT 1",
+        (subject_id,)
+    )
+    row = c.fetchone()
+    conn.close()
+    return dict(row) if row else None
 
 
 def close_attendance_session(session_id):

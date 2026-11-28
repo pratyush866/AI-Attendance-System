@@ -19,6 +19,11 @@ def show_attendance_result(df, logs, session_id=None):
                 create_attendance(logs)
                 if session_id:
                     close_attendance_session(session_id)
+                    for k in list(st.session_state.keys()):
+                        if k.startswith("active_session_"):
+                            sess = st.session_state.get(k)
+                            if isinstance(sess, dict) and sess.get("session_id") == session_id:
+                                del st.session_state[k]
                 st.success("✅ Attendance successfully saved to database!")
                 st.session_state.attendance_images = []
                 st.session_state.voice_attendance_results = None

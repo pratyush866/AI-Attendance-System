@@ -7,7 +7,8 @@ from src.database.db import (
     submit_session_selfie,
     get_session_selfies,
     create_student,
-    enroll_student_to_subject
+    enroll_student_to_subject,
+    update_student_face_embedding
 )
 from src.pipelines.face_pipeline import (
     get_face_embeddings, 
@@ -66,9 +67,12 @@ def session_checkin_screen(session_id):
 
     with col1:
         if enrolled_students:
-            student_options = {f"{s['name']} (ID: {s['student_id']})": s for s in enrolled_students}
+            student_options = {
+                f"{s.get('roll_no') or s['student_id']} - {s['name']}": s
+                for s in enrolled_students
+            }
             student_options["➕ New Student (Not Enrolled)"] = None
-            selected_label = st.selectbox("Select Your Name", options=list(student_options.keys()))
+            selected_label = st.selectbox("Select Your Roll No & Name", options=list(student_options.keys()))
             selected_student = student_options[selected_label]
         else:
             selected_student = None
@@ -76,6 +80,7 @@ def session_checkin_screen(session_id):
 
         if selected_student is None:
             new_student_name = st.text_input("Enter Your Full Name", placeholder="e.g. Rahul Sharma")
+            new_student_roll = st.text_input("Enter Your Roll Number", placeholder="e.g. 101")
 
     with col2:
         entered_pin = st.text_input(
@@ -122,7 +127,11 @@ def session_checkin_screen(session_id):
                     st.error("❌ No face detected in your photo! Please face the camera properly with good light.")
                     return
                 face_emb = encodings[0].tolist()
-                created = create_student(new_student_name.strip(), face_embedding=face_emb)
+                created = create_student(
+                    new_student_name.strip(),
+                    roll_no=new_student_roll.strip() if new_student_roll.strip() else None,
+                    face_embedding=face_emb
+                )
                 if created:
                     new_student = created[0]
                     enroll_student_to_subject(new_student['student_id'], session['subject_id'])
@@ -148,14 +157,7 @@ def session_checkin_screen(session_id):
             if not reg_emb:
                 encs = get_face_embeddings(img_np)
                 if encs:
-                    from src.database.db import get_local_conn
-                    import json
-                    conn = get_local_conn()
-                    c = conn.cursor()
-                    c.execute("UPDATE students SET face_embedding = ? WHERE student_id = ?", 
-                              (json.dumps(encs[0].tolist()), selected_student['student_id']))
-                    conn.commit()
-                    conn.close()
+                    update_student_face_embedding(selected_student['student_id'], encs[0].tolist())
 
             # Record session selfie submission
             success = submit_session_selfie(
@@ -177,6 +179,5 @@ def session_checkin_screen(session_id):
                         </p>
                     </div>
                 """, unsafe_allow_html=True)
-                st.rerun()
             else:
                 st.error("Failed to record check-in. Please try again.")

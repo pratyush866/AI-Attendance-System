@@ -17,7 +17,9 @@ from src.database.db import (
     get_attendance_for_teacher, 
     get_subject_students,
     create_attendance_session,
-    get_session_selfies
+    get_active_session_for_subject,
+    get_session_selfies,
+    roll_sort_key
 )
 from src.components.dialog_create_subject import create_subject_dialog
 from src.components.dialog_share_subject import share_subject_dialog
@@ -129,6 +131,11 @@ def teacher_tab_take_attendance():
     """, unsafe_allow_html=True)
 
     current_session = st.session_state.get(session_key)
+    if not current_session:
+        db_active = get_active_session_for_subject(selected_subject_id)
+        if db_active:
+            st.session_state[session_key] = db_active
+            current_session = db_active
 
     col_sess_1, col_sess_2 = st.columns([3, 2], vertical_alignment='center')
     with col_sess_1:
@@ -209,7 +216,7 @@ def teacher_tab_take_attendance():
         gallery_cols = st.columns(4)
         for idx, img in enumerate(st.session_state.attendance_images):
             with gallery_cols[idx % 4]:
-                st.image(img, use_column_width=True, caption=f'Photo {idx+1}')
+                st.image(img, use_container_width=True, caption=f'Photo {idx+1}')
 
     has_photos = bool(st.session_state.attendance_images)
     c1, c2, c3 = st.columns(3)
@@ -231,7 +238,10 @@ def teacher_tab_take_attendance():
                     st.warning('No students enrolled in this course!')
                     return
 
-                candidates = [node['students'] for node in enrolled_students if node.get('students')]
+                candidates = sorted(
+                    [node['students'] for node in enrolled_students if node.get('students')],
+                    key=roll_sort_key
+                )
                 all_detected_ids = {}
 
                 # Scan classroom photos
@@ -282,8 +292,8 @@ def teacher_tab_take_attendance():
                         verif_note = "Classroom Photo"
 
                     results.append({
+                        "Roll No": student.get('roll_no') or f"ID-{sid}",
                         "Name": student['name'],
-                        "ID": sid,
                         "In-Class Selfie": "✅ Yes" if in_selfie else "❌ No",
                         "Classroom Photo": "✅ Yes" if in_photo else "❌ No",
                         "Status": status,
@@ -345,55 +355,241 @@ def teacher_tab_manage_subjects():
         st.info("NO SUBJECTS FOUND. Click '➕ Create New Subject' above to get started.")
 
 
+def _parse_iso_dt(ts):
+    if not ts:
+        return None
+    try:
+        return datetime.fromisoformat(str(ts).replace("Z", "+00:00").split(".")[0])
+    except Exception:
+        return None
+
+
 def teacher_tab_attendance_records():
     st.markdown("""
         <h2 style="color: #0f172a; margin: 0; font-size: 1.6rem; font-weight: 700; font-family: 'Outfit', sans-serif;">
-            📊 Attendance Records & Reports
+            📊 Attendance Register & Monthly Reports
         </h2>
+        <p style="color: #64748b; margin: 4px 0 12px 0; font-size: 0.92rem;">
+            Roll No.-sorted date-wise classroom register with automatic ✔ Present / ✘ Absent marks.
+        </p>
     """, unsafe_allow_html=True)
-    st.markdown("<hr style='border: none; border-top: 1px solid #e2e8f0; margin: 12px 0 18px 0;'/>", unsafe_allow_html=True)
+    st.markdown("<hr style='border: none; border-top: 1px solid #e2e8f0; margin: 8px 0 16px 0;'/>", unsafe_allow_html=True)
 
     teacher_id = st.session_state.teacher_data['teacher_id']
+    subjects = get_teacher_subjects(teacher_id)
     records = get_attendance_for_teacher(teacher_id)
 
-    if not records:
-        st.info("No attendance records found yet.")
+    if not subjects and not records:
+        st.info("No subjects or attendance records found yet.")
         return
 
-    data = []
-    for r in records:
-        ts = r.get('timestamp')
-        data.append({
-            "ts_group": ts.split(".")[0] if ts else None,
-            "Time": datetime.fromisoformat(ts).strftime("%Y-%m-%d %I:%M %p") if ts else "N/A",
-            "Subject": r['subjects']['name'],
-            "Subject Code": r['subjects']['subject_code'],
-            "Section": r['subjects'].get('section', '-'),
-            "is_present": bool(r.get('is_present', False)),
-            "Status": r.get('verification_status', 'Present' if r.get('is_present') else 'Absent')
-        })
+    # Filter bar: Subject + Month
+    f_col1, f_col2 = st.columns([2, 1])
+    with f_col1:
+        if subjects:
+            sub_map = {f"{s['name']} ({s['subject_code']} • {s['section']})": s for s in subjects}
+            selected_sub_label = st.selectbox("Select Subject for Register", options=list(sub_map.keys()), key="reg_sub_select")
+            selected_sub = sub_map[selected_sub_label]
+            selected_sub_id = selected_sub['subject_id']
+        else:
+            selected_sub = None
+            selected_sub_id = None
 
-    df = pd.DataFrame(data)
+    sub_records = [r for r in records if selected_sub_id is None or r.get('subject_id') == selected_sub_id]
 
-    summary = (
-        df.groupby(['ts_group', 'Time', 'Subject', 'Subject Code', 'Section'])
-        .agg(
-            Present_Count=('is_present', 'sum'),
-            Total_Count=('is_present', 'count')
-        ).reset_index()
-    )
+    month_map = {}
+    for r in sub_records:
+        dt = _parse_iso_dt(r.get('timestamp'))
+        if dt:
+            m_key = dt.strftime("%Y-%m")
+            month_map[m_key] = dt.strftime("%B %Y")
 
-    summary['Attendance Stats'] = (
-        "✅ " + summary['Present_Count'].astype(str) + " / "
-        + summary['Total_Count'].astype(str) + ' Students'
-    )
+    sorted_months = sorted(month_map.keys(), reverse=True)
+    month_options = ["All Months"] + [month_map[m] for m in sorted_months]
+    label_to_mkey = {month_map[m]: m for m in sorted_months}
 
-    display_df = (
-        summary.sort_values(by='ts_group', ascending=False)
-        [['Time', 'Subject', 'Subject Code', 'Section', 'Attendance Stats']]
-    )
+    with f_col2:
+        selected_month_label = st.selectbox("Filter by Month", options=month_options, key="reg_month_select")
 
-    st.dataframe(display_df, use_container_width=True, hide_index=True)
+    if selected_month_label != "All Months":
+        target_mkey = label_to_mkey[selected_month_label]
+        filtered_records = [
+            r for r in sub_records
+            if (_parse_iso_dt(r.get('timestamp')) and _parse_iso_dt(r.get('timestamp')).strftime("%Y-%m") == target_mkey)
+        ]
+    else:
+        filtered_records = sub_records
+
+    tab_reg, tab_sess = st.tabs(["📋 Date-Wise Register (Roll No. Sorted)", "📅 Session Summary & Logs"])
+
+    with tab_reg:
+        # Combine enrolled students + any students present in logs, sorted automatically by Roll No
+        student_roster = {}
+        if selected_sub_id is not None:
+            for node in get_subject_students(selected_sub_id):
+                stu = node.get('students')
+                if stu:
+                    student_roster[stu['student_id']] = {
+                        'student_id': stu['student_id'],
+                        'name': stu['name'],
+                        'roll_no': stu.get('roll_no')
+                    }
+
+        for r in filtered_records:
+            sid = r.get('student_id')
+            if sid and sid not in student_roster:
+                student_roster[sid] = {
+                    'student_id': sid,
+                    'name': r.get('student_name') or f"Student #{sid}",
+                    'roll_no': r.get('roll_no')
+                }
+
+        sorted_roster = sorted(student_roster.values(), key=roll_sort_key)
+
+        if not sorted_roster:
+            st.info("No students enrolled in this subject yet.")
+        elif not filtered_records:
+            st.info("No attendance has been marked for this selection yet. Showing enrolled students sorted by Roll No:")
+            empty_df = pd.DataFrame([
+                {
+                    "Roll No": s.get('roll_no') or f"ID-{s['student_id']}",
+                    "Student Name": s['name'],
+                    "Present": 0,
+                    "Total": 0,
+                    "Attendance %": "0.0%"
+                }
+                for s in sorted_roster
+            ])
+            st.dataframe(empty_df, use_container_width=True, hide_index=True)
+        else:
+            # Group timestamps into ordered lecture slots
+            raw_slots = sorted({
+                str(r.get('timestamp')).split(".")[0]
+                for r in filtered_records if r.get('timestamp')
+            })
+            # Check if multiple sessions share the same calendar date
+            date_counts = {}
+            for slot in raw_slots:
+                dt = _parse_iso_dt(slot)
+                d_label = dt.strftime("%d %b") if dt else slot
+                date_counts[d_label] = date_counts.get(d_label, 0) + 1
+
+            slot_labels = {}
+            for slot in raw_slots:
+                dt = _parse_iso_dt(slot)
+                if dt:
+                    d_label = dt.strftime("%d %b")
+                    slot_labels[slot] = dt.strftime("%d %b (%H:%M)") if date_counts[d_label] > 1 else d_label
+                else:
+                    slot_labels[slot] = slot
+
+            # Map (student_id, slot) -> is_present
+            att_lookup = {}
+            for r in filtered_records:
+                slot = str(r.get('timestamp')).split(".")[0] if r.get('timestamp') else None
+                if slot:
+                    att_lookup[(r['student_id'], slot)] = bool(r.get('is_present', False))
+
+            register_rows = []
+            total_present_all = 0
+            total_logged_all = 0
+            for stu in sorted_roster:
+                sid = stu['student_id']
+                row = {
+                    "Roll No": stu.get('roll_no') or f"ID-{sid}",
+                    "Student Name": stu['name'],
+                }
+                p_cnt = 0
+                t_cnt = 0
+                for slot in raw_slots:
+                    col_lbl = slot_labels[slot]
+                    if (sid, slot) in att_lookup:
+                        t_cnt += 1
+                        if att_lookup[(sid, slot)]:
+                            p_cnt += 1
+                            row[col_lbl] = "✔ P"
+                        else:
+                            row[col_lbl] = "✘ A"
+                    else:
+                        row[col_lbl] = "—"
+                pct = round((p_cnt / t_cnt) * 100, 1) if t_cnt > 0 else 0.0
+                row["Present"] = p_cnt
+                row["Total"] = t_cnt
+                row["%"] = f"{pct:.1f}%"
+                row["Standing"] = "✅ Safe" if (t_cnt == 0 or pct >= 75.0) else "⚠️ Low"
+                register_rows.append(row)
+                total_present_all += p_cnt
+                total_logged_all += t_cnt
+
+            reg_df = pd.DataFrame(register_rows)
+
+            k1, k2, k3 = st.columns(3)
+            avg_pct = round((total_present_all / total_logged_all) * 100, 1) if total_logged_all > 0 else 0.0
+            with k1:
+                st.metric("👥 Enrolled Students", len(sorted_roster))
+            with k2:
+                st.metric("📅 Total Lecture Dates", len(raw_slots))
+            with k3:
+                st.metric("📈 Class Avg Attendance", f"{avg_pct:.1f}%")
+
+            st.dataframe(reg_df, use_container_width=True, hide_index=True)
+
+            csv_bytes = reg_df.to_csv(index=False).encode("utf-8-sig")
+            fname_code = selected_sub['subject_code'] if selected_sub else "All"
+            st.download_button(
+                label="📥 Download Date-Wise Register (Excel CSV)",
+                data=csv_bytes,
+                file_name=f"Attendance_Register_{fname_code}.csv",
+                mime="text/csv",
+                type="primary",
+                use_container_width=True
+            )
+
+    with tab_sess:
+        if not filtered_records:
+            st.info("No attendance logs found for this filter.")
+        else:
+            data = []
+            for r in filtered_records:
+                ts = r.get('timestamp')
+                dt = _parse_iso_dt(ts)
+                data.append({
+                    "ts_group": str(ts).split(".")[0] if ts else "N/A",
+                    "Time": dt.strftime("%Y-%m-%d %I:%M %p") if dt else "N/A",
+                    "Roll No": r.get('roll_no') or f"ID-{r.get('student_id')}",
+                    "Student Name": r.get('student_name') or f"Student #{r.get('student_id')}",
+                    "Subject": r['subjects']['name'],
+                    "Subject Code": r['subjects']['subject_code'],
+                    "Section": r['subjects'].get('section', '-'),
+                    "is_present": bool(r.get('is_present', False)),
+                    "Mark": "✔ Present" if r.get('is_present') else "✘ Absent",
+                    "Verification": r.get('verification_status', 'Present' if r.get('is_present') else 'Absent'),
+                    "_sort": roll_sort_key({'roll_no': r.get('roll_no'), 'name': r.get('student_name'), 'student_id': r.get('student_id')})
+                })
+
+            df = pd.DataFrame(data)
+            summary = (
+                df.groupby(['ts_group', 'Time', 'Subject', 'Subject Code', 'Section'])
+                .agg(
+                    Present_Count=('is_present', 'sum'),
+                    Total_Count=('is_present', 'count')
+                ).reset_index()
+            )
+            summary['Attendance Stats'] = (
+                "✅ " + summary['Present_Count'].astype(str) + " / "
+                + summary['Total_Count'].astype(str) + ' Students'
+            )
+            display_df = (
+                summary.sort_values(by='ts_group', ascending=False)
+                [['Time', 'Subject', 'Subject Code', 'Section', 'Attendance Stats']]
+            )
+            st.dataframe(display_df, use_container_width=True, hide_index=True)
+
+            with st.expander("🔎 View Individual Student Logs (Roll No. Sorted)"):
+                detail_df = df.sort_values(by=['ts_group', '_sort'], ascending=[False, True])[
+                    ['Time', 'Roll No', 'Student Name', 'Mark', 'Verification']
+                ]
+                st.dataframe(detail_df, use_container_width=True, hide_index=True)
 
 
 def login_teacher(username, password):

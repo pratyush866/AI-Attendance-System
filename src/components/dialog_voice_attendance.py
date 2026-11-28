@@ -46,8 +46,8 @@ def voice_attendance_dialog(selected_subject_id):
                 score_str = f"{score:.2f}" if is_present else "-"
 
                 results.append({
+                    "Roll No": student.get('roll_no') or f"ID-{student['student_id']}",
                     "Name": student['name'],
-                    "ID": student['student_id'],
                     "Match Score": score_str,
                     "Status": "✅ Present" if is_present else "❌ Absent"
                 })
