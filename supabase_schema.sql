@@ -1,6 +1,6 @@
 -- SNAPCLASS / AI Attendance System — Complete Supabase PostgreSQL Schema
--- Paste and run this entire script once in your Supabase SQL Editor to make
--- attendance permanent across all teachers, students, and devices on Streamlit Cloud.
+-- Paste and run this entire script once in your Supabase SQL Editor:
+-- https://supabase.com/dashboard/project/mvcrbqeoowijdcvesaxy/sql/new
 
 CREATE TABLE IF NOT EXISTS teachers (
     teacher_id BIGSERIAL PRIMARY KEY,
@@ -60,3 +60,16 @@ CREATE TABLE IF NOT EXISTS attendance_logs (
     is_present BOOLEAN NOT NULL,
     verification_status TEXT DEFAULT 'Verified'
 );
+
+-- Grant API access for Supabase publishable/anon key & disable RLS on app tables
+ALTER TABLE teachers DISABLE ROW LEVEL SECURITY;
+ALTER TABLE students DISABLE ROW LEVEL SECURITY;
+ALTER TABLE subjects DISABLE ROW LEVEL SECURITY;
+ALTER TABLE subject_students DISABLE ROW LEVEL SECURITY;
+ALTER TABLE attendance_sessions DISABLE ROW LEVEL SECURITY;
+ALTER TABLE session_selfies DISABLE ROW LEVEL SECURITY;
+ALTER TABLE attendance_logs DISABLE ROW LEVEL SECURITY;
+
+GRANT USAGE ON SCHEMA public TO anon, authenticated;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated;

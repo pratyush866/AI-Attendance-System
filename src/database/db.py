@@ -146,6 +146,47 @@ def init_local_db():
 init_local_db()
 
 
+def ensure_supabase_seed():
+    """Seed initial demo teacher/subject/students on an empty Supabase database once per runtime."""
+    if not IS_SUPABASE_AVAILABLE:
+        return
+    try:
+        t_check = supabase.table("teachers").select("teacher_id").limit(1).execute()
+        if t_check.data is not None and len(t_check.data) == 0:
+            demo_pass = bcrypt.hashpw("admin123".encode(), bcrypt.gensalt()).decode()
+            t_res = supabase.table("teachers").insert({
+                "username": "prof_roy",
+                "password": demo_pass,
+                "name": "Prof. Ananya Roy"
+            }).execute()
+            if t_res.data:
+                tid = t_res.data[0]["teacher_id"]
+                s_res = supabase.table("subjects").insert({
+                    "subject_code": "CS101",
+                    "name": "Artificial Intelligence & ML",
+                    "section": "Section A",
+                    "teacher_id": tid
+                }).execute()
+                if s_res.data:
+                    sub_id = s_res.data[0]["subject_id"]
+                    sample_students = [
+                        {"name": "Akash Sharma", "roll_no": "101"},
+                        {"name": "Priya Verma", "roll_no": "102"},
+                        {"name": "Rohan Gupta", "roll_no": "103"},
+                        {"name": "Neha Singh", "roll_no": "104"},
+                        {"name": "Amit Patel", "roll_no": "105"}
+                    ]
+                    st_res = supabase.table("students").insert(sample_students).execute()
+                    if st_res.data:
+                        enrolls = [{"student_id": st_row["student_id"], "subject_id": sub_id} for st_row in st_res.data]
+                        supabase.table("subject_students").insert(enrolls).execute()
+    except Exception as e:
+        logging.warning(f"Supabase auto-seed skipped: {e}")
+
+
+ensure_supabase_seed()
+
+
 def hash_pass(pwd):
     return bcrypt.hashpw(pwd.encode(), bcrypt.gensalt()).decode()
 
@@ -198,10 +239,12 @@ def teacher_login(username, password):
     if IS_SUPABASE_AVAILABLE:
         try:
             res = supabase.table("teachers").select("*").eq("username", username).execute()
-            if res.data:
-                teacher = res.data[0]
-                if check_pass(password, teacher['password']):
-                    return teacher
+            if res.data is not None:
+                if res.data:
+                    teacher = res.data[0]
+                    if check_pass(password, teacher['password']):
+                        return teacher
+                return None
         except Exception as e:
             logging.warning(f"Supabase login failed, fallback to local: {e}")
 
@@ -405,7 +448,7 @@ def get_student_subjects(student_id):
     if IS_SUPABASE_AVAILABLE:
         try:
             res = supabase.table('subject_students').select('*, subjects(*)').eq('student_id', student_id).execute()
-            if res.data:
+            if res.data is not None:
                 return res.data
         except Exception:
             pass
@@ -441,7 +484,7 @@ def get_student_attendance(student_id):
     if IS_SUPABASE_AVAILABLE:
         try:
             res = supabase.table('attendance_logs').select('*, subjects(*)').eq('student_id', student_id).execute()
-            if res.data:
+            if res.data is not None:
                 return res.data
         except Exception:
             pass
@@ -631,7 +674,7 @@ def get_subject_by_code(subject_code):
     if IS_SUPABASE_AVAILABLE:
         try:
             res = supabase.table('subjects').select('subject_id, name, subject_code, section').eq('subject_code', subject_code).execute()
-            if res.data:
+            if res.data is not None:
                 return res.data
         except Exception:
             pass
@@ -703,7 +746,9 @@ def get_session_by_id(session_id):
     if IS_SUPABASE_AVAILABLE:
         try:
             res = supabase.table("attendance_sessions").select("*, subjects(*), teachers(name)").eq("session_id", session_id).execute()
-            if res.data:
+            if res.data is not None:
+                if not res.data:
+                    return None
                 row = res.data[0]
                 sub = row.get("subjects") or {}
                 tea = row.get("teachers") or {}
